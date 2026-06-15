@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meals.app.data.dto.MemberDto
 import com.meals.app.data.dto.RoomDto
+import com.meals.app.data.dto.RoomRenameRequest
 import com.meals.app.data.dto.UserDto
 import com.meals.app.data.local.Preferences
 import com.meals.app.data.remote.ApiClient
@@ -23,9 +24,11 @@ data class ProfileUiState(
     val inviteCode: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
+    val successMessage: String? = null,
     val nicknameSaved: Boolean = false,
     val pinChanged: Boolean = false,
     val loggedOut: Boolean = false,
+    val roomClosed: Boolean = false,
     val serverUrl: String = ""
 )
 
@@ -141,5 +144,137 @@ class ProfileViewModel : ViewModel() {
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
+    }
+
+    fun renameRoom(newName: String) {
+        val roomId = Preferences.activeRoomId
+        if (roomId < 0) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val response = ApiClient.getApiService().renameRoom(roomId, RoomRenameRequest(newName))
+                val body = response.body()
+                if (response.isSuccessful && body?.code == 0 && body.data != null) {
+                    val room = body.data
+                    Preferences.activeRoomName = room.name
+                    _uiState.update {
+                        it.copy(
+                            room = room,
+                            isLoading = false,
+                            successMessage = "房间已改名为「${room.name}」"
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = body?.message ?: "改名失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = "网络错误: ${e.message}") }
+            }
+        }
+    }
+
+    fun refreshInviteCode() {
+        val roomId = Preferences.activeRoomId
+        if (roomId < 0) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val response = ApiClient.getApiService().refreshRoomCode(roomId)
+                val body = response.body()
+                if (response.isSuccessful && body?.code == 0 && body.data != null) {
+                    val room = body.data
+                    Preferences.activeRoomCode = room.code
+                    _uiState.update {
+                        it.copy(
+                            room = room,
+                            inviteCode = room.code,
+                            isLoading = false,
+                            successMessage = "邀请码已刷新"
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = body?.message ?: "刷新邀请码失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = "网络错误: ${e.message}") }
+            }
+        }
+    }
+
+    fun closeRoom() {
+        val roomId = Preferences.activeRoomId
+        if (roomId < 0) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val response = ApiClient.getApiService().closeRoom(roomId)
+                val body = response.body()
+                if (response.isSuccessful && body?.code == 0) {
+                    Preferences.clearActiveRoom()
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            roomClosed = true,
+                            successMessage = "餐桌已关闭"
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = body?.message ?: "关闭餐桌失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = "网络错误: ${e.message}") }
+            }
+        }
+    }
+
+    fun leaveRoom() {
+        val roomId = Preferences.activeRoomId
+        if (roomId < 0) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val response = ApiClient.getApiService().leaveRoom(roomId)
+                val body = response.body()
+                if (response.isSuccessful && body?.code == 0) {
+                    Preferences.clearActiveRoom()
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            roomClosed = true,
+                            successMessage = "已退出餐桌"
+                        )
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = body?.message ?: "退出餐桌失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = "网络错误: ${e.message}") }
+            }
+        }
+    }
+
+    fun removeMember(userId: Int) {
+        val roomId = Preferences.activeRoomId
+        if (roomId < 0) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(error = null) }
+            try {
+                val response = ApiClient.getApiService().removeMember(roomId, userId)
+                val body = response.body()
+                if (response.isSuccessful && body?.code == 0) {
+                    // Reload members
+                    loadProfile()
+                    _uiState.update { it.copy(successMessage = "成员已移除") }
+                } else {
+                    _uiState.update { it.copy(error = body?.message ?: "移除成员失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "网络错误: ${e.message}") }
+            }
+        }
     }
 }

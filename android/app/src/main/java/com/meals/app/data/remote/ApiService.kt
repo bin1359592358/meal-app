@@ -49,6 +49,22 @@ interface ApiService {
         @Path("userId") userId: Int
     ): Response<ApiResponse<Unit>>
 
+    @PUT("api/rooms/{id}")
+    suspend fun renameRoom(
+        @Path("id") id: Int,
+        @Body request: RoomRenameRequest
+    ): Response<ApiResponse<RoomDto>>
+
+    @PATCH("api/rooms/{id}/close")
+    suspend fun closeRoom(
+        @Path("id") id: Int
+    ): Response<ApiResponse<RoomDto>>
+
+    @PATCH("api/rooms/{id}/refresh-code")
+    suspend fun refreshRoomCode(
+        @Path("id") id: Int
+    ): Response<ApiResponse<RoomDto>>
+
     // ==================== Categories ====================
 
     @GET("api/rooms/{roomId}/categories")

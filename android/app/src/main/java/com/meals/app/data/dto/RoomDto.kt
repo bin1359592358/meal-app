@@ -8,6 +8,10 @@ data class RoomJoinRequest(
     val code: String
 )
 
+data class RoomRenameRequest(
+    val name: String
+)
+
 data class RoomDto(
     val id: Int,
     val name: String,

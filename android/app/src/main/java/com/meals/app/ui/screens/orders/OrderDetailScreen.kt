@@ -206,9 +206,12 @@ private fun OrderDetailContent(
         }
 
         // Chef action buttons
-        if (isChef && order.status.lowercase() == "pending") {
+        if (isChef && order.status.lowercase() in listOf("pending", "preparing")) {
             item {
-                StatusActionButtons(onUpdateStatus = onUpdateStatus)
+                StatusActionButtons(
+                    currentStatus = order.status.lowercase(),
+                    onUpdateStatus = onUpdateStatus
+                )
             }
         }
 
@@ -269,7 +272,7 @@ private fun OrderInfoHeader(order: OrderDto) {
 private fun StatusBadgeLarge(status: String) {
     val (backgroundColor, textColor, label) = when (status.lowercase()) {
         "pending" -> Triple(OrangePrimary.copy(alpha = 0.1f), OrangePrimary, "待处理")
-        "confirmed" -> Triple(Color(0xFF2196F3).copy(alpha = 0.1f), Color(0xFF2196F3), "已确认")
+        "preparing" -> Triple(Color(0xFF2196F3).copy(alpha = 0.1f), Color(0xFF2196F3), "制作中")
         "completed" -> Triple(StatusGreen.copy(alpha = 0.1f), StatusGreen, "已完成")
         "cancelled" -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, "已取消")
         else -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, status)
@@ -413,7 +416,10 @@ private fun OrderSummary(order: OrderDto) {
 }
 
 @Composable
-private fun StatusActionButtons(onUpdateStatus: (String) -> Unit) {
+private fun StatusActionButtons(
+    currentStatus: String,
+    onUpdateStatus: (String) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -431,35 +437,74 @@ private fun StatusActionButtons(onUpdateStatus: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = { onUpdateStatus("confirmed") },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = "确认订单",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-            }
+            when (currentStatus) {
+                "pending" -> {
+                    // Pending: confirm (→ preparing) + cancel
+                    Button(
+                        onClick = { onUpdateStatus("preparing") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "开始制作",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                    }
 
-            OutlinedButton(
-                onClick = { onUpdateStatus("cancelled") },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
-            ) {
-                Text(
-                    text = "取消订单",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                    OutlinedButton(
+                        onClick = { onUpdateStatus("cancelled") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
+                    ) {
+                        Text(
+                            text = "取消订单",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                "preparing" -> {
+                    // Preparing: complete + cancel
+                    Button(
+                        onClick = { onUpdateStatus("completed") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "标记完成",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { onUpdateStatus("cancelled") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
+                    ) {
+                        Text(
+                            text = "取消订单",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
     }

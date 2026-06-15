@@ -106,7 +106,7 @@ fun OrderCard(
 private fun StatusBadge(status: String) {
     val (backgroundColor, textColor, label) = when (status.lowercase()) {
         "pending" -> Triple(OrangePrimary.copy(alpha = 0.1f), OrangePrimary, "待处理")
-        "confirmed" -> Triple(Color(0xFF2196F3).copy(alpha = 0.1f), Color(0xFF2196F3), "已确认")
+        "preparing" -> Triple(Color(0xFF2196F3).copy(alpha = 0.1f), Color(0xFF2196F3), "制作中")
         "completed" -> Triple(StatusGreen.copy(alpha = 0.1f), StatusGreen, "已完成")
         "cancelled" -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, "已取消")
         else -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, status)

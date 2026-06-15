@@ -87,6 +87,10 @@ class RoomCreate(BaseModel):
     name: str
 
 
+class RoomRename(BaseModel):
+    name: str
+
+
 class RoomJoin(BaseModel):
     code: str
 

@@ -23,12 +23,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,6 +89,9 @@ fun ProfileScreen(
     var showNicknameDialog by remember { mutableStateOf(false) }
     var showPinDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showCloseConfirm by remember { mutableStateOf(false) }
+    var showLeaveConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
@@ -104,6 +111,22 @@ fun ProfileScreen(
         if (uiState.pinChanged) {
             snackbarHostState.showSnackbar("PIN已更新")
             viewModel.clearPinChanged()
+        }
+    }
+
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearSuccessMessage()
+        }
+    }
+
+    LaunchedEffect(uiState.roomClosed) {
+        if (uiState.roomClosed) {
+            // Navigate back to welcome/join screen
+            navController.navigate("welcome") {
+                popUpTo(0) { inclusive = true }
+            }
         }
     }
 
@@ -146,6 +169,62 @@ fun ProfileScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Rename room dialog
+    if (showRenameDialog) {
+        RenameRoomDialog(
+            currentName = uiState.room?.name ?: "",
+            onConfirm = { newName ->
+                viewModel.renameRoom(newName)
+                showRenameDialog = false
+            },
+            onDismiss = { showRenameDialog = false }
+        )
+    }
+
+    // Close room confirmation (chef)
+    if (showCloseConfirm) {
+        AlertDialog(
+            onDismissRequest = { showCloseConfirm = false },
+            title = { Text("关闭餐桌") },
+            text = { Text("关闭后，成员将无法继续在此餐桌点餐。确定关闭吗？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCloseConfirm = false
+                    viewModel.closeRoom()
+                }) {
+                    Text("确认关闭", color = PriceRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCloseConfirm = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Leave room confirmation (guest)
+    if (showLeaveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLeaveConfirm = false },
+            title = { Text("退出餐桌") },
+            text = { Text("退出后将不再属于此餐桌，需要重新输入邀请码才能加入。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLeaveConfirm = false
+                    viewModel.leaveRoom()
+                }) {
+                    Text("确认退出", color = PriceRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveConfirm = false }) {
                     Text("取消")
                 }
             }
@@ -203,6 +282,7 @@ fun ProfileScreen(
                         roomName = uiState.room?.name ?: "未加入房间",
                         inviteCode = uiState.inviteCode,
                         memberCount = uiState.members.size,
+                        role = uiState.role,
                         onCopyCode = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText("邀请码", uiState.inviteCode)
@@ -216,7 +296,11 @@ fun ProfileScreen(
                             }
                             val shareIntent = android.content.Intent.createChooser(sendIntent, null)
                             context.startActivity(shareIntent)
-                        }
+                        },
+                        onRenameRoom = { showRenameDialog = true },
+                        onRefreshCode = { viewModel.refreshInviteCode() },
+                        onCloseRoom = { showCloseConfirm = true },
+                        onLeaveRoom = { showLeaveConfirm = true }
                     )
                 }
 
@@ -235,7 +319,10 @@ fun ProfileScreen(
                     items(uiState.members) { member ->
                         MemberRow(
                             nickname = member.nickname,
-                            role = member.role
+                            role = member.role,
+                            isCurrentUserChef = uiState.role == "chef",
+                            isSelf = member.user_id == uiState.user?.id,
+                            onRemoveMember = { viewModel.removeMember(member.user_id) }
                         )
                     }
                 }
@@ -444,8 +531,13 @@ private fun RoomSection(
     roomName: String,
     inviteCode: String,
     memberCount: Int,
+    role: String,
     onCopyCode: () -> Unit,
-    onShareCode: () -> Unit
+    onShareCode: () -> Unit,
+    onRenameRoom: () -> Unit,
+    onRefreshCode: () -> Unit,
+    onCloseRoom: () -> Unit,
+    onLeaveRoom: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -459,12 +551,33 @@ private fun RoomSection(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = roomName,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF212121)
-            )
+            // Room name + rename button (chef only)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = roomName,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121),
+                    modifier = Modifier.weight(1f)
+                )
+                if (role == "chef") {
+                    IconButton(
+                        onClick = onRenameRoom,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "改名",
+                            tint = GrayDescription,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -487,6 +600,23 @@ private fun RoomSection(
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Refresh code button (chef only)
+                    if (role == "chef") {
+                        IconButton(
+                            onClick = onRefreshCode,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color(0xFFE8F5E9), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "刷新邀请码",
+                                tint = Color(0xFF43A047),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
                     IconButton(
                         onClick = onCopyCode,
                         modifier = Modifier
@@ -522,12 +652,89 @@ private fun RoomSection(
                 fontSize = 13.sp,
                 color = GrayDescription
             )
+
+            // Divider
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0xFFEEEEEE))
+            )
+
+            // Chef management actions
+            if (role == "chef") {
+                OutlinedButton(
+                    onClick = onCloseRoom,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.StopCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("关闭餐桌", fontSize = 14.sp)
+                }
+            }
+
+            // Guest: leave room
+            if (role == "guest") {
+                OutlinedButton(
+                    onClick = onLeaveRoom,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF616161))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("退出餐桌", fontSize = 14.sp)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun MemberRow(nickname: String, role: String) {
+private fun MemberRow(
+    nickname: String,
+    role: String,
+    isCurrentUserChef: Boolean,
+    isSelf: Boolean,
+    onRemoveMember: () -> Unit
+) {
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+
+    if (showRemoveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRemoveConfirm = false },
+            title = { Text("移除成员") },
+            text = { Text("确定要将「$nickname」从此餐桌移除吗？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRemoveConfirm = false
+                    onRemoveMember()
+                }) {
+                    Text("确认移除", color = PriceRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveConfirm = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -579,6 +786,21 @@ private fun MemberRow(nickname: String, role: String) {
                     fontWeight = FontWeight.Medium,
                     color = if (role == "chef") OrangePrimary else GrayDescription
                 )
+            }
+
+            // Kick button: only visible to chef, for non-self, non-chef members
+            if (isCurrentUserChef && !isSelf && role != "chef") {
+                IconButton(
+                    onClick = { showRemoveConfirm = true },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PersonRemove,
+                        contentDescription = "移除",
+                        tint = PriceRed.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
@@ -752,6 +974,48 @@ private fun ChangePinDialog(
                 onClick = { onConfirm(oldPin, newPin) },
                 colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
                 enabled = oldPin.length in 4..6 && newPin.length in 4..6
+            ) {
+                Text("确认", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+@Composable
+private fun RenameRoomDialog(
+    currentName: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf(currentName) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("修改餐桌名称") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("餐桌名称") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = OrangePrimary,
+                    focusedLabelColor = OrangePrimary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(name) },
+                colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                enabled = name.isNotBlank()
             ) {
                 Text("确认", color = Color.White)
             }

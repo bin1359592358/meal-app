@@ -14,6 +14,7 @@ from schemas import (
     MemberResponse,
     RoomCreate,
     RoomJoin,
+    RoomRename,
     RoomResponse,
 )
 
@@ -193,3 +194,65 @@ def remove_member(
     db.commit()
 
     return ApiResponse(message="成员已移除")
+
+
+@router.put("/{room_id}")
+def rename_room(
+    room_id: int,
+    body: RoomRename,
+    current_user: User = Depends(require_chef),
+    db: Session = Depends(get_db),
+):
+    """Rename a room. Only the chef can do this."""
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="餐桌不存在")
+
+    room.name = body.name
+    db.commit()
+    db.refresh(room)
+
+    return ApiResponse(data=_build_room_response(room, db))
+
+
+@router.patch("/{room_id}/close")
+def close_room(
+    room_id: int,
+    current_user: User = Depends(require_chef),
+    db: Session = Depends(get_db),
+):
+    """Close/deactivate a room. Only the chef can do this."""
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="餐桌不存在")
+
+    if not room.is_active:
+        raise HTTPException(status_code=400, detail="餐桌已经关闭")
+
+    room.is_active = False
+    db.commit()
+    db.refresh(room)
+
+    return ApiResponse(data=_build_room_response(room, db))
+
+
+@router.patch("/{room_id}/refresh-code")
+def refresh_room_code(
+    room_id: int,
+    current_user: User = Depends(require_chef),
+    db: Session = Depends(get_db),
+):
+    """Regenerate the invitation code for a room. Only the chef can do this."""
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="餐桌不存在")
+
+    code = _generate_room_code()
+    while db.query(Room).filter(Room.code == code, Room.id != room_id).first():
+        code = _generate_room_code()
+
+    room.code = code
+    db.commit()
+    db.refresh(room)
+
+    return ApiResponse(data=_build_room_response(room, db))
