@@ -21,7 +21,7 @@ object Preferences {
     private const val KEY_SERVER_URL = "server_url"
     private const val KEY_ROOMS_JSON = "rooms_json"
 
-    private const val DEFAULT_SERVER_URL = "http://10.0.2.2:8000"
+    private const val DEFAULT_SERVER_URL = "https://backend-production-a604b.up.railway.app"
 
     private lateinit var prefs: SharedPreferences
     private val gson = Gson()

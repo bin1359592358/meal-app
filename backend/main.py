@@ -22,8 +22,15 @@ from models import (  # noqa: F401  – ensure all models are registered
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: create tables on startup."""
+    """Application lifespan: create tables and auto-seed on startup."""
     Base.metadata.create_all(bind=engine)
+    # Auto-seed if database is empty
+    try:
+        from seed_data import seed
+        seed()
+    except Exception as e:
+        import logging
+        logging.getLogger("seed").warning("Auto-seed skipped: %s", e)
     yield
 
 

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # Database
     TURSO_DATABASE_URL: str = ""
     TURSO_AUTH_TOKEN: str = ""
+    DATABASE_URL: str = ""  # Override: e.g. sqlite:////data/meal_app.db
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME: str = ""
@@ -27,9 +28,12 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Return the appropriate database URL."""
-        if self.is_local_db:
-            return "sqlite:///./meal_app.db"
-        return self.TURSO_DATABASE_URL
+        # Priority: DATABASE_URL env > Turso > local SQLite
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        if self.TURSO_DATABASE_URL:
+            return self.TURSO_DATABASE_URL
+        return "sqlite:///./meal_app.db"
 
     @property
     def is_cloudinary_configured(self) -> bool:
