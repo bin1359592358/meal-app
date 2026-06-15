@@ -221,18 +221,16 @@ def close_room(
     current_user: User = Depends(require_chef),
     db: Session = Depends(get_db),
 ):
-    """Close/deactivate a room. Only the chef can do this."""
+    """Toggle room active status. Only the chef can do this."""
     room = db.query(Room).filter(Room.id == room_id).first()
     if not room:
         raise HTTPException(status_code=404, detail="餐桌不存在")
 
-    if not room.is_active:
-        raise HTTPException(status_code=400, detail="餐桌已经关闭")
-
-    room.is_active = False
+    room.is_active = not room.is_active
     db.commit()
     db.refresh(room)
 
+    status_text = "已开启" if room.is_active else "已关闭"
     return ApiResponse(data=_build_room_response(room, db))
 
 

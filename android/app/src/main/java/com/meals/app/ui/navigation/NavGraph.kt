@@ -137,7 +137,9 @@ fun NavGraph(
 
     // Check if user is logged in by looking at shared preferences
     val hasToken = rememberHasToken()
-    val startDestination = if (hasToken) Routes.MAIN else Routes.WELCOME
+    val hasActiveRoom = com.meals.app.data.local.Preferences.activeRoomId > 0
+    // Go to MAIN only if logged in AND has an active room
+    val startDestination = if (hasToken && hasActiveRoom) Routes.MAIN else Routes.WELCOME
 
     Scaffold(
         bottomBar = {
@@ -156,7 +158,9 @@ fun NavGraph(
         ) {
             // Welcome / Login / Register screen
             composable(Routes.WELCOME) {
+                val alreadyLoggedIn = hasToken && !hasActiveRoom
                 WelcomeScreen(
+                    skipToRoomSetup = alreadyLoggedIn,
                     onNavigateToMain = {
                         navController.navigate(Routes.MAIN) {
                             popUpTo(Routes.WELCOME) { inclusive = true }

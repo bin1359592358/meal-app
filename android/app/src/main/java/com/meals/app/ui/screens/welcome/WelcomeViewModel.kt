@@ -32,6 +32,14 @@ class WelcomeViewModel : ViewModel() {
     fun updateRoomCode(v: String) { _state.value = _state.value.copy(roomCode = v) }
     fun toggleMode() { _state.value = _state.value.copy(isRegisterMode = !_state.value.isRegisterMode, error = null) }
 
+    /**
+     * Called when user is already logged in (token exists) but has no active room.
+     * Tries to fetch rooms from server and auto-select one.
+     */
+    fun fetchRoomsForExistingUser() {
+        fetchRooms()
+    }
+
     fun login() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)

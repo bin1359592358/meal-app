@@ -93,9 +93,17 @@ private val WelcomeLightColorScheme = lightColorScheme(
 @Composable
 fun WelcomeScreen(
     onNavigateToMain: () -> Unit,
+    skipToRoomSetup: Boolean = false,
     viewModel: WelcomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    // If user is already logged in but has no room, skip to room setup
+    LaunchedEffect(skipToRoomSetup) {
+        if (skipToRoomSetup) {
+            viewModel.fetchRoomsForExistingUser()
+        }
+    }
 
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn) {
@@ -138,7 +146,18 @@ fun WelcomeScreen(
                             modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            if (!state.showRoomSetup) {
+                            if (skipToRoomSetup && state.isLoading && !state.showRoomSetup) {
+                                // Loading state while fetching rooms for existing user
+                                Spacer(modifier = Modifier.height(32.dp))
+                                CircularProgressIndicator(color = OrangePrimary)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "正在加载餐桌...",
+                                    color = GrayText,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(32.dp))
+                            } else if (!state.showRoomSetup) {
                                 // Tab row for login/register
                                 AuthTabs(
                                     isRegisterMode = state.isRegisterMode,
