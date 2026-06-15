@@ -1,0 +1,92 @@
+package com.meals.app.data.repository
+
+import com.meals.app.data.dto.*
+import com.meals.app.data.local.Preferences
+import com.meals.app.data.remote.ApiClient
+
+object AuthRepository {
+
+    private val api get() = ApiClient.getApiService()
+
+    suspend fun register(
+        username: String,
+        nickname: String,
+        pin: String
+    ): Result<AuthResponse> = safeCall {
+        val response = api.register(RegisterRequest(username, nickname, pin))
+        val body = response.body()
+        if (response.isSuccessful && body?.code == 0 && body.data != null) {
+            saveAuthData(body.data)
+            Result.success(body.data)
+        } else {
+            Result.failure(ApiException(body?.message ?: "Registration failed"))
+        }
+    }
+
+    suspend fun login(username: String, pin: String): Result<AuthResponse> = safeCall {
+        val response = api.login(LoginRequest(username, pin))
+        val body = response.body()
+        if (response.isSuccessful && body?.code == 0 && body.data != null) {
+            saveAuthData(body.data)
+            Result.success(body.data)
+        } else {
+            Result.failure(ApiException(body?.message ?: "Login failed"))
+        }
+    }
+
+    suspend fun changePin(oldPin: String, newPin: String): Result<Unit> = safeCall {
+        val response = api.changePin(PinChangeRequest(oldPin, newPin))
+        val body = response.body()
+        if (response.isSuccessful && body?.code == 0) {
+            Result.success(Unit)
+        } else {
+            Result.failure(ApiException(body?.message ?: "Failed to change PIN"))
+        }
+    }
+
+    suspend fun getMe(): Result<UserDto> = safeCall {
+        val response = api.getMe()
+        val body = response.body()
+        if (response.isSuccessful && body?.code == 0 && body.data != null) {
+            Preferences.userId = body.data.id
+            Preferences.username = body.data.username
+            Preferences.nickname = body.data.nickname
+            Result.success(body.data)
+        } else {
+            Result.failure(ApiException(body?.message ?: "Failed to get user info"))
+        }
+    }
+
+    suspend fun updateNickname(nickname: String): Result<UserDto> = safeCall {
+        val response = api.updateNickname(NicknameUpdateRequest(nickname))
+        val body = response.body()
+        if (response.isSuccessful && body?.code == 0 && body.data != null) {
+            Preferences.nickname = body.data.nickname
+            Result.success(body.data)
+        } else {
+            Result.failure(ApiException(body?.message ?: "Failed to update nickname"))
+        }
+    }
+
+    fun logout() {
+        Preferences.clear()
+        ApiClient.reset()
+    }
+
+    private fun saveAuthData(authResponse: AuthResponse) {
+        Preferences.token = authResponse.token
+        Preferences.userId = authResponse.user.id
+        Preferences.username = authResponse.user.username
+        Preferences.nickname = authResponse.user.nickname
+    }
+
+    private inline fun <T> safeCall(block: () -> Result<T>): Result<T> {
+        return try {
+            block()
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}
+
+class ApiException(message: String) : Exception(message)

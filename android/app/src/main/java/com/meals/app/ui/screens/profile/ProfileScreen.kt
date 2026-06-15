@@ -1,0 +1,765 @@
+package com.meals.app.ui.screens.profile
+
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+
+private val OrangePrimary = Color(0xFFFF6B35)
+private val PriceRed = Color(0xFFE53935)
+private val GrayDescription = Color(0xFF9E9E9E)
+private val BackgroundColor = Color(0xFFFAFAFA)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(
+    navController: NavHostController,
+    onNavigateToAdmin: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    var showNicknameDialog by remember { mutableStateOf(false) }
+    var showPinDialog by remember { mutableStateOf(false) }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(uiState.nicknameSaved) {
+        if (uiState.nicknameSaved) {
+            snackbarHostState.showSnackbar("昵称已更新")
+            viewModel.clearNicknameSaved()
+        }
+    }
+
+    LaunchedEffect(uiState.pinChanged) {
+        if (uiState.pinChanged) {
+            snackbarHostState.showSnackbar("PIN已更新")
+            viewModel.clearPinChanged()
+        }
+    }
+
+    // Nickname dialog
+    if (showNicknameDialog) {
+        EditNicknameDialog(
+            currentNickname = uiState.user?.nickname ?: "",
+            onConfirm = { newNickname ->
+                viewModel.changeNickname(newNickname)
+                showNicknameDialog = false
+            },
+            onDismiss = { showNicknameDialog = false }
+        )
+    }
+
+    // PIN dialog
+    if (showPinDialog) {
+        ChangePinDialog(
+            onConfirm = { oldPin, newPin ->
+                viewModel.changePin(oldPin, newPin)
+                showPinDialog = false
+            },
+            onDismiss = { showPinDialog = false }
+        )
+    }
+
+    // Logout confirmation
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            title = { Text("确认退出") },
+            text = { Text("退出后需要重新登录") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutConfirm = false
+                    viewModel.logout()
+                }) {
+                    Text("退出", color = PriceRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "个人中心",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundColor
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = BackgroundColor
+    ) { paddingValues ->
+        if (uiState.isLoading && uiState.user == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = OrangePrimary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // User section
+                item {
+                    UserSection(
+                        username = uiState.user?.username ?: "",
+                        nickname = uiState.user?.nickname ?: "",
+                        role = uiState.role,
+                        onEditNickname = { showNicknameDialog = true }
+                    )
+                }
+
+                // Room section
+                item {
+                    RoomSection(
+                        roomName = uiState.room?.name ?: "未加入房间",
+                        inviteCode = uiState.inviteCode,
+                        memberCount = uiState.members.size,
+                        onCopyCode = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("邀请码", uiState.inviteCode)
+                            clipboard.setPrimaryClip(clip)
+                        },
+                        onShareCode = {
+                            val sendIntent = android.content.Intent().apply {
+                                action = android.content.Intent.ACTION_SEND
+                                putExtra(android.content.Intent.EXTRA_TEXT, "加入我的点餐房间，邀请码: ${uiState.inviteCode}")
+                                type = "text/plain"
+                            }
+                            val shareIntent = android.content.Intent.createChooser(sendIntent, null)
+                            context.startActivity(shareIntent)
+                        }
+                    )
+                }
+
+                // Members list
+                if (uiState.members.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "房间成员 (${uiState.members.size})",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF212121),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+
+                    items(uiState.members) { member ->
+                        MemberRow(
+                            nickname = member.nickname,
+                            role = member.role
+                        )
+                    }
+                }
+
+                // Chef: Admin button
+                if (uiState.role == "chef") {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToAdmin() },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = OrangePrimary.copy(alpha = 0.1f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AdminPanelSettings,
+                                    contentDescription = null,
+                                    tint = OrangePrimary,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "菜单管理",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = OrangePrimary
+                                    )
+                                    Text(
+                                        text = "管理分类和菜品",
+                                        fontSize = 12.sp,
+                                        color = OrangePrimary.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Server URL setting
+                item {
+                    ServerUrlSection(
+                        currentUrl = uiState.serverUrl,
+                        onUrlChanged = { viewModel.updateServerUrl(it) }
+                    )
+                }
+
+                // Action buttons
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { showPinDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF616161))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Key,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("修改PIN码", fontSize = 14.sp)
+                        }
+
+                        Button(
+                            onClick = { showLogoutConfirm = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PriceRed.copy(alpha = 0.1f),
+                                contentColor = PriceRed
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("退出登录", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+
+                // Bottom spacer
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserSection(
+    username: String,
+    nickname: String,
+    role: String,
+    onEditNickname: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Avatar placeholder
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(OrangePrimary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = nickname.ifBlank { username },
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "@$username",
+                            fontSize = 14.sp,
+                            color = GrayDescription
+                        )
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    if (role == "chef") OrangePrimary.copy(alpha = 0.1f) else Color(0xFFE3F2FD),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (role == "chef") "主厨" else "食客",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (role == "chef") OrangePrimary else Color(0xFF1976D2)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Edit nickname row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onEditNickname() }
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = GrayDescription,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "修改昵称",
+                    fontSize = 14.sp,
+                    color = Color(0xFF616161)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoomSection(
+    roomName: String,
+    inviteCode: String,
+    memberCount: Int,
+    onCopyCode: () -> Unit,
+    onShareCode: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = roomName,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "邀请码",
+                        fontSize = 12.sp,
+                        color = GrayDescription
+                    )
+                    Text(
+                        text = inviteCode,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = OrangePrimary,
+                        letterSpacing = 2.sp
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(
+                        onClick = onCopyCode,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFFF5F5F5), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "复制",
+                            tint = Color(0xFF616161),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onShareCode,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(OrangePrimary.copy(alpha = 0.1f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "分享",
+                            tint = OrangePrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "${memberCount}位成员",
+                fontSize = 13.sp,
+                color = GrayDescription
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemberRow(nickname: String, role: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (role == "chef") OrangePrimary.copy(alpha = 0.1f) else Color(0xFFF5F5F5)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = if (role == "chef") OrangePrimary else GrayDescription,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Text(
+                text = nickname,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF212121),
+                modifier = Modifier.weight(1f)
+            )
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        if (role == "chef") OrangePrimary.copy(alpha = 0.1f) else Color(0xFFF5F5F5),
+                        RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = if (role == "chef") "主厨" else "食客",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (role == "chef") OrangePrimary else GrayDescription
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServerUrlSection(
+    currentUrl: String,
+    onUrlChanged: (String) -> Unit
+) {
+    var urlText by remember(currentUrl) { mutableStateOf(currentUrl) }
+    var isEditing by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "服务器地址",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF616161)
+                )
+                if (!isEditing) {
+                    TextButton(onClick = { isEditing = true }) {
+                        Text("修改", fontSize = 13.sp, color = OrangePrimary)
+                    }
+                }
+            }
+
+            if (isEditing) {
+                OutlinedTextField(
+                    value = urlText,
+                    onValueChange = { urlText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("服务器URL", fontSize = 12.sp) },
+                    placeholder = { Text("http://192.168.1.100:8080", fontSize = 13.sp) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OrangePrimary,
+                        focusedLabelColor = OrangePrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { isEditing = false }) {
+                        Text("取消", color = GrayDescription)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            onUrlChanged(urlText)
+                            isEditing = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("保存", color = Color.White)
+                    }
+                }
+            } else {
+                Text(
+                    text = currentUrl.ifBlank { "未设置" },
+                    fontSize = 13.sp,
+                    color = GrayDescription
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditNicknameDialog(
+    currentNickname: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var nickname by remember { mutableStateOf(currentNickname) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("修改昵称") },
+        text = {
+            OutlinedTextField(
+                value = nickname,
+                onValueChange = { nickname = it },
+                label = { Text("昵称") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = OrangePrimary,
+                    focusedLabelColor = OrangePrimary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(nickname) },
+                colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                enabled = nickname.isNotBlank()
+            ) {
+                Text("确认", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ChangePinDialog(
+    onConfirm: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var oldPin by remember { mutableStateOf("") }
+    var newPin by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("修改PIN码") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = oldPin,
+                    onValueChange = { if (it.length <= 6) oldPin = it },
+                    label = { Text("原PIN码") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OrangePrimary,
+                        focusedLabelColor = OrangePrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = newPin,
+                    onValueChange = { if (it.length <= 6) newPin = it },
+                    label = { Text("新PIN码 (4-6位)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OrangePrimary,
+                        focusedLabelColor = OrangePrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(oldPin, newPin) },
+                colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary),
+                enabled = oldPin.length in 4..6 && newPin.length in 4..6
+            ) {
+                Text("确认", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
