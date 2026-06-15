@@ -22,11 +22,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonRemove
@@ -40,9 +40,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -378,42 +378,33 @@ fun ProfileScreen(
 
                 // Action buttons
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { showPinDialog = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF616161))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Key,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column {
+                            SettingsActionRow(
+                                icon = Icons.Default.Key,
+                                label = "修改PIN码",
+                                subtitle = "保护你的账户安全",
+                                iconTint = Color(0xFF616161),
+                                backgroundColor = Color(0xFFF5F5F5),
+                                onClick = { showPinDialog = true }
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("修改PIN码", fontSize = 14.sp)
-                        }
-
-                        Button(
-                            onClick = { showLogoutConfirm = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PriceRed.copy(alpha = 0.1f),
-                                contentColor = PriceRed
+                            HorizontalDivider(
+                                color = Color(0xFFEEEEEE),
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ExitToApp,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                            SettingsActionRow(
+                                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                                label = "退出登录",
+                                subtitle = "退出当前账户",
+                                iconTint = PriceRed,
+                                backgroundColor = PriceRed.copy(alpha = 0.06f),
+                                onClick = { showLogoutConfirm = true }
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("退出登录", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -663,42 +654,26 @@ private fun RoomSection(
 
             // Chef management actions
             if (role == "chef") {
-                OutlinedButton(
-                    onClick = onCloseRoom,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.StopCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("关闭餐桌", fontSize = 14.sp)
-                }
+                SettingsActionRow(
+                    icon = Icons.Default.StopCircle,
+                    label = "关闭餐桌",
+                    subtitle = "关闭后成员将无法点餐",
+                    iconTint = PriceRed,
+                    backgroundColor = PriceRed.copy(alpha = 0.06f),
+                    onClick = onCloseRoom
+                )
             }
 
             // Guest: leave room
             if (role == "guest") {
-                OutlinedButton(
-                    onClick = onLeaveRoom,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF616161))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ExitToApp,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("退出餐桌", fontSize = 14.sp)
-                }
+                SettingsActionRow(
+                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    label = "退出餐桌",
+                    subtitle = "需要新邀请码才能重新加入",
+                    iconTint = Color(0xFF757575),
+                    backgroundColor = Color(0xFFF5F5F5),
+                    onClick = onLeaveRoom
+                )
             }
         }
     }
@@ -1026,4 +1001,56 @@ private fun RenameRoomDialog(
             }
         }
     )
+}
+
+@Composable
+private fun SettingsActionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    subtitle: String,
+    iconTint: Color,
+    backgroundColor: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(backgroundColor, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF212121)
+            )
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = GrayDescription
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = Color(0xFFBDBDBD),
+            modifier = Modifier.size(20.dp)
+        )
+    }
 }

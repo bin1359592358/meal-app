@@ -1,6 +1,8 @@
 package com.meals.app.ui.screens.orders
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,21 +12,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -188,7 +192,7 @@ private fun OrderDetailContent(
             itemsIndexed(order.items!!) { index, item ->
                 OrderItemRow(item = item)
                 if (index < order.items!!.size - 1) {
-                    Divider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(vertical = 4.dp))
+                    HorizontalDivider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
         }
@@ -392,7 +396,7 @@ private fun OrderSummary(order: OrderDto) {
             }
 
             if (order.people_count > 1) {
-                Divider(color = Color(0xFFEEEEEE))
+                HorizontalDivider(color = Color(0xFFEEEEEE))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -424,87 +428,118 @@ private fun StatusActionButtons(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "操作",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF212121)
-        )
+        when (currentStatus) {
+            "pending" -> {
+                // Primary action: start preparing
+                ActionCard(
+                    icon = Icons.Default.PlayArrow,
+                    label = "开始制作",
+                    subtitle = "接单并通知厨房",
+                    containerColor = Color(0xFF2196F3),
+                    onClick = { onUpdateStatus("preparing") }
+                )
 
+                // Secondary action: cancel
+                ActionCard(
+                    icon = Icons.Default.Cancel,
+                    label = "取消订单",
+                    subtitle = "拒绝此订单",
+                    containerColor = Color.White,
+                    contentColor = PriceRed,
+                    borderColor = PriceRed.copy(alpha = 0.3f),
+                    onClick = { onUpdateStatus("cancelled") }
+                )
+            }
+
+            "preparing" -> {
+                // Primary action: mark complete
+                ActionCard(
+                    icon = Icons.Default.CheckCircle,
+                    label = "标记完成",
+                    subtitle = "菜品已全部做好",
+                    containerColor = StatusGreen,
+                    onClick = { onUpdateStatus("completed") }
+                )
+
+                // Secondary action: cancel
+                ActionCard(
+                    icon = Icons.Default.Cancel,
+                    label = "取消订单",
+                    subtitle = "中止制作",
+                    containerColor = Color.White,
+                    contentColor = PriceRed,
+                    borderColor = PriceRed.copy(alpha = 0.3f),
+                    onClick = { onUpdateStatus("cancelled") }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color = Color.White,
+    borderColor: Color = Color.Transparent,
+    onClick: () -> Unit
+) {
+    val isSolid = containerColor != Color.White
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isSolid) Modifier
+                else Modifier.border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            ),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSolid) 4.dp else 0.dp
+        )
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            when (currentStatus) {
-                "pending" -> {
-                    // Pending: confirm (→ preparing) + cancel
-                    Button(
-                        onClick = { onUpdateStatus("preparing") },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = "开始制作",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { onUpdateStatus("cancelled") },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
-                    ) {
-                        Text(
-                            text = "取消订单",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                "preparing" -> {
-                    // Preparing: complete + cancel
-                    Button(
-                        onClick = { onUpdateStatus("completed") },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = "标记完成",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { onUpdateStatus("cancelled") },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PriceRed)
-                    ) {
-                        Text(
-                            text = "取消订单",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        if (isSolid) Color.White.copy(alpha = 0.2f)
+                        else contentColor.copy(alpha = 0.08f),
+                        RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isSolid) Color.White else contentColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSolid) Color.White else contentColor
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = if (isSolid) Color.White.copy(alpha = 0.75f)
+                    else contentColor.copy(alpha = 0.6f)
+                )
             }
         }
     }
