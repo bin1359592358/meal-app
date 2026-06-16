@@ -1,5 +1,7 @@
 package com.meals.app.ui.screens.admin
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meals.app.data.dto.CategoryDto
@@ -8,6 +10,7 @@ import com.meals.app.data.dto.DishDto
 import com.meals.app.data.dto.DishUpdateRequest
 import com.meals.app.data.local.Preferences
 import com.meals.app.data.repository.MealRepository
+import com.meals.app.util.ImagePicker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +31,8 @@ data class DishEditUiState(
     val error: String? = null,
     val saved: Boolean = false,
     val deleted: Boolean = false,
-    val isEditing: Boolean = false
+    val isEditing: Boolean = false,
+    val isUploading: Boolean = false
 )
 
 class DishEditViewModel : ViewModel() {
@@ -204,6 +208,20 @@ class DishEditViewModel : ViewModel() {
                 },
                 onFailure = { e ->
                     _uiState.update { it.copy(isLoading = false, error = e.message ?: "删除失败") }
+                }
+            )
+        }
+    }
+
+    fun uploadImage(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUploading = true, error = null) }
+            ImagePicker.uploadImage(context, uri).fold(
+                onSuccess = { url ->
+                    _uiState.update { it.copy(imageUrl = url, isUploading = false) }
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(isUploading = false, error = e.message ?: "图片上传失败") }
                 }
             )
         }

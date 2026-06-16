@@ -1,5 +1,8 @@
 package com.meals.app.ui.screens.admin
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,11 +68,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.meals.app.ui.components.SeasoningEditor
 
 private val OrangePrimary = Color(0xFFFF6B35)
@@ -91,6 +96,16 @@ fun DishEditScreen(
     var tagInput by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Image picker launcher - opens gallery to select an image
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.uploadImage(context, it)
+        }
+    }
 
     LaunchedEffect(dishId) {
         viewModel.init(dishIdInt)
@@ -407,30 +422,76 @@ fun DishEditScreen(
                             color = Color(0xFF424242)
                         )
 
+                        // Image preview or placeholder
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp)
+                                .height(140.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color(0xFFF5F5F5))
-                                .clickable { /* TODO: Open image picker */ },
+                                .clickable(enabled = !uiState.isUploading) {
+                                    imagePickerLauncher.launch("image/*")
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Image,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(36.dp),
-                                    tint = GrayDescription
-                                )
-                                Text(
-                                    text = "选择图片",
-                                    fontSize = 13.sp,
-                                    color = GrayDescription
-                                )
+                            when {
+                                uiState.isUploading -> {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = OrangePrimary,
+                                            modifier = Modifier.size(32.dp),
+                                            strokeWidth = 3.dp
+                                        )
+                                        Text(
+                                            text = "上传中...",
+                                            fontSize = 13.sp,
+                                            color = GrayDescription
+                                        )
+                                    }
+                                }
+                                uiState.imageUrl.isNotBlank() -> {
+                                    AsyncImage(
+                                        model = uiState.imageUrl,
+                                        contentDescription = "菜品图片",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                    )
+                                    // Small overlay to indicate tapping will replace
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.3f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "点击更换图片",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Image,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(36.dp),
+                                            tint = GrayDescription
+                                        )
+                                        Text(
+                                            text = "点击选择图片",
+                                            fontSize = 13.sp,
+                                            color = GrayDescription
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -438,7 +499,7 @@ fun DishEditScreen(
                             value = uiState.imageUrl,
                             onValueChange = { viewModel.updateImageUrl(it) },
                             label = { Text("图片URL（可选）", fontSize = 12.sp) },
-                            placeholder = { Text("输入图片链接", fontSize = 12.sp) },
+                            placeholder = { Text("输入图片链接或从相册选择", fontSize = 12.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = OrangePrimary,
