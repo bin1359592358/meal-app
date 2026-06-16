@@ -331,7 +331,8 @@ fun NavGraph(
                         navController.navigate(Routes.MAIN) {
                             popUpTo(Routes.MAIN) { inclusive = true }
                         }
-                    }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

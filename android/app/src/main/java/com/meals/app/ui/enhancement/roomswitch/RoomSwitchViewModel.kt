@@ -16,7 +16,8 @@ data class RoomListUiState(
     val currentRoomId: Int = -1,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val roomSwitched: Boolean = false
+    val roomSwitched: Boolean = false,
+    val roomLeft: Boolean = false
 )
 
 class RoomSwitchViewModel : ViewModel() {
@@ -83,5 +84,40 @@ class RoomSwitchViewModel : ViewModel() {
 
     fun clearRoomSwitched() {
         _uiState.update { it.copy(roomSwitched = false) }
+    }
+
+    fun leaveOrCloseRoom(room: RoomDto) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val api = ApiClient.getApiService()
+                val userId = Preferences.userId
+                val response = if (room.chef_id == userId) {
+                    // Chef closes the room
+                    api.closeRoom(room.id)
+                } else {
+                    // Guest leaves the room
+                    api.leaveRoom(room.id)
+                }
+                val body = response.body()
+                if (response.isSuccessful && (body?.code == 0 || response.code() == 200)) {
+                    // If the removed room was the active one, clear it
+                    if (room.id == Preferences.activeRoomId) {
+                        Preferences.clearActiveRoom()
+                    }
+                    // Reload rooms from server
+                    loadRooms()
+                    _uiState.update { it.copy(isLoading = false, roomLeft = true) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = body?.message ?: "操作失败") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "网络错误") }
+            }
+        }
+    }
+
+    fun clearRoomLeft() {
+        _uiState.update { it.copy(roomLeft = false) }
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonRemove
@@ -266,16 +268,27 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // User section
+                // User profile header
                 item {
                     UserSection(
                         username = uiState.user?.username ?: "",
                         nickname = uiState.user?.nickname ?: "",
                         role = uiState.role,
                         onEditNickname = { showNicknameDialog = true }
+                    )
+                }
+
+                // Current room section header
+                item {
+                    Text(
+                        text = "当前餐桌",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp)
                     )
                 }
 
@@ -307,18 +320,19 @@ fun ProfileScreen(
                     )
                 }
 
-                // Members list
-                if (uiState.members.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "房间成员 (${uiState.members.size})",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF212121),
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
+                // Members section header
+                item {
+                    Text(
+                        text = "成员 (${uiState.members.size})",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
 
+                // Members list or empty
+                if (uiState.members.isNotEmpty()) {
                     items(uiState.members) { member ->
                         MemberRow(
                             nickname = member.nickname,
@@ -330,8 +344,26 @@ fun ProfileScreen(
                     }
                 } else {
                     item {
-                        MembersEmpty()
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            MembersEmpty()
+                        }
                     }
+                }
+
+                // Room management section header
+                item {
+                    Text(
+                        text = "餐桌管理",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+                    )
                 }
 
                 // Chef: Admin button
@@ -479,6 +511,17 @@ fun ProfileScreen(
                     }
                 }
 
+                // Account settings section header
+                item {
+                    Text(
+                        text = "账号设置",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+                    )
+                }
+
                 // Server URL setting
                 item {
                     ServerUrlSection(
@@ -487,7 +530,7 @@ fun ProfileScreen(
                     )
                 }
 
-                // Action buttons
+                // Settings card (PIN + Logout)
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -538,59 +581,98 @@ private fun UserSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            // Gradient header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFFFF6B35),
+                                Color(0xFFFF8F65)
+                            )
+                        ),
+                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                    )
+            )
+
+            // Avatar + info overlapping the gradient
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar placeholder
+                // Avatar - overlapping the gradient
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(64.dp)
                         .clip(CircleShape)
-                        .background(OrangePrimary.copy(alpha = 0.15f)),
+                        .background(Color.White)
+                        .offset(y = (-32).dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = OrangePrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFFFF6B35).copy(alpha = 0.2f),
+                                        Color(0xFFFF8F65).copy(alpha = 0.2f)
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = OrangePrimary,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
 
-                Column(modifier = Modifier.weight(1f)) {
+                // Name + role (offset to compensate for avatar overlap)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.offset(y = (-20).dp)
+                ) {
                     Text(
                         text = nickname.ifBlank { username },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
                     )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "@$username",
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             color = GrayDescription
                         )
                         Box(
                             modifier = Modifier
                                 .background(
                                     if (role == "chef") OrangePrimary.copy(alpha = 0.1f) else Color(0xFFE3F2FD),
-                                    RoundedCornerShape(4.dp)
+                                    RoundedCornerShape(12.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .padding(horizontal = 10.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = if (role == "chef") "主厨" else "食客",
@@ -600,29 +682,29 @@ private fun UserSection(
                             )
                         }
                     }
-                }
-            }
 
-            // Edit nickname row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onEditNickname() }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = GrayDescription,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = "修改昵称",
-                    fontSize = 14.sp,
-                    color = Color(0xFF616161)
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Edit nickname chip
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = onEditNickname,
+                        modifier = Modifier.height(32.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0E0E0))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = GrayDescription
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("修改昵称", fontSize = 12.sp, color = Color(0xFF616161))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
@@ -653,15 +735,29 @@ private fun RoomSection(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Room name + rename button (chef only)
+            // Room name + rename
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(OrangePrimary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = null,
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 Text(
                     text = roomName,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121),
                     modifier = Modifier.weight(1f)
@@ -675,95 +771,114 @@ private fun RoomSection(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "改名",
                             tint = GrayDescription,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "邀请码",
-                        fontSize = 12.sp,
-                        color = GrayDescription
-                    )
-                    Text(
-                        text = inviteCode,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = OrangePrimary,
-                        letterSpacing = 2.sp
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Refresh code button (chef only)
-                    if (role == "chef") {
-                        IconButton(
-                            onClick = onRefreshCode,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFE8F5E9), CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "刷新邀请码",
-                                tint = Color(0xFF43A047),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    IconButton(
-                        onClick = onCopyCode,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0xFFF5F5F5), CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "复制",
-                            tint = Color(0xFF616161),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onShareCode,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(OrangePrimary.copy(alpha = 0.1f), CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "分享",
-                            tint = OrangePrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = "${memberCount}位成员",
-                fontSize = 13.sp,
-                color = GrayDescription
-            )
-
-            // Divider
+            // Invite code with background
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color(0xFFEEEEEE))
-            )
+                    .background(Color(0xFFFFF8F4), RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "邀请码",
+                            fontSize = 11.sp,
+                            color = GrayDescription
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = inviteCode,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OrangePrimary,
+                            letterSpacing = 3.sp
+                        )
+                    }
 
-            // Chef management actions
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (role == "chef") {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE8F5E9))
+                                    .clickable { onRefreshCode() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "刷新",
+                                    tint = Color(0xFF43A047),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFF5F5F5))
+                                .clickable { onCopyCode() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "复制",
+                                tint = Color(0xFF616161),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(OrangePrimary.copy(alpha = 0.1f))
+                                .clickable { onShareCode() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "分享",
+                                tint = OrangePrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Member count
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = GrayDescription,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "${memberCount}位成员",
+                    fontSize = 13.sp,
+                    color = GrayDescription
+                )
+            }
+
+            // Divider
+            HorizontalDivider(color = Color(0xFFEEEEEE))
+
+            // Management actions
             if (role == "chef") {
                 SettingsActionRow(
                     icon = Icons.Default.StopCircle,
@@ -774,8 +889,6 @@ private fun RoomSection(
                     onClick = onCloseRoom
                 )
             }
-
-            // Guest: leave room
             if (role == "guest") {
                 SettingsActionRow(
                     icon = Icons.AutoMirrored.Filled.ExitToApp,
