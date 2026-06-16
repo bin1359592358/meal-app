@@ -116,6 +116,9 @@ import coil.compose.AsyncImage
 import com.meals.app.data.dto.CategoryDto
 import com.meals.app.data.dto.DishDto
 import com.meals.app.data.local.Preferences
+import com.meals.app.ui.enhancement.search.MealSearchBar
+import com.meals.app.ui.enhancement.empty.MenuEmptyChef
+import com.meals.app.ui.enhancement.empty.MenuEmptyGuest
 
 import kotlinx.coroutines.delay
 
@@ -182,6 +185,7 @@ fun MenuScreen(
     var randomDish by remember { mutableStateOf<DishDto?>(null) }
     var showDishDetail by remember { mutableStateOf<DishDto?>(null) }
     var showCartPreview by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // Pull-to-refresh state (Material 2 interop for pull refresh)
     val pullRefreshState = rememberPullRefreshState(
@@ -251,6 +255,19 @@ fun MenuScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Search bar
+                    if (state.allDishes.isNotEmpty()) {
+                        MealSearchBar(
+                            query = searchQuery,
+                            onQueryChange = { query ->
+                                searchQuery = query
+                                viewModel.searchDishes(query)
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+
                 // Main content: two-pane layout
                 Row(
                     modifier = Modifier
@@ -301,39 +318,24 @@ fun MenuScreen(
                                     )
                                 }
                             }
+                        } else if (state.dishes.isEmpty() && state.categories.isEmpty()) {
+                            // True empty state - no categories or dishes at all
+                            if (isChef) {
+                                MenuEmptyChef(onAddDish = onNavigateToAdmin)
+                            } else {
+                                MenuEmptyGuest()
+                            }
                         } else if (state.dishes.isEmpty()) {
-                            // Empty state - warm and friendly
+                            // Category selected but no dishes in it
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .clip(CircleShape)
-                                            .background(OrangeSoft),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "🍽️",
-                                            fontSize = 36.sp
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = "暂无菜品",
-                                        color = MediumText,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = "让厨师添加新菜品吧",
-                                        color = GrayHint,
-                                        fontSize = 13.sp
-                                    )
-                                }
+                                Text(
+                                    text = "该分类下暂无菜品",
+                                    color = GrayDesc,
+                                    fontSize = 14.sp
+                                )
                             }
                         } else {
                             LazyColumn(
@@ -392,6 +394,7 @@ fun MenuScreen(
                             contentColor = OrangePrimary
                         )
                     }
+                }
                 }
 
                 // ── Bottom: Floating Cart Bar ──

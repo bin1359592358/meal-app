@@ -72,9 +72,9 @@ object MealRepository {
     suspend fun getDishes(
         roomId: Int,
         categoryId: Int? = null,
-        query: String? = null
+        searchQuery: String? = null
     ): Result<List<DishDto>> = safeCall {
-        val response = api.getDishes(roomId, categoryId, query)
+        val response = api.getDishes(roomId, categoryId, searchQuery)
         val body = response.body()
         if (response.isSuccessful && body?.code == 0 && body.data != null) {
             Result.success(body.data)

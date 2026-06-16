@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
@@ -23,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,6 +42,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.meals.app.data.remote.ApiClient
+import com.meals.app.data.local.Preferences
 import com.meals.app.ui.screens.admin.AdminScreen
 import com.meals.app.ui.screens.admin.DishEditScreen
 import com.meals.app.ui.screens.cart.CartScreen
@@ -44,8 +51,10 @@ import com.meals.app.ui.screens.menu.MenuScreen
 import com.meals.app.ui.screens.orders.OrderDetailScreen
 import com.meals.app.ui.screens.orders.OrderHistoryScreen
 import com.meals.app.ui.enhancement.overview.OverviewScreen
+import com.meals.app.ui.enhancement.roomswitch.RoomListScreen
 import com.meals.app.ui.screens.profile.ProfileScreen
 import com.meals.app.ui.screens.welcome.WelcomeScreen
+import kotlinx.coroutines.launch
 
 /**
  * Route constants used for navigation throughout the app.
@@ -62,6 +71,7 @@ object Routes {
     const val ADMIN = "admin"
     const val DISH_EDIT = "dish_edit/{dishId}"
     const val OVERVIEW = "overview"
+    const val ROOM_LIST = "room_list"
 
     // Helper functions for routes with arguments
     fun orderDetail(orderId: String) = "order_detail/$orderId"
@@ -111,7 +121,8 @@ private val routesWithoutBottomBarPrefixes = setOf(
     Routes.JOIN_ROOM,
     Routes.CART,
     "dish_edit/",
-    Routes.OVERVIEW
+    Routes.OVERVIEW,
+    Routes.ROOM_LIST
 )
 
 /**
@@ -143,12 +154,31 @@ fun NavGraph(
     // Go to MAIN only if logged in AND has an active room
     val startDestination = if (hasToken && hasActiveRoom) Routes.MAIN else Routes.WELCOME
 
+    var pendingOrderCount by remember { mutableIntStateOf(0) }
+
+    // Load pending order count for badge
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == Routes.ORDER_HISTORY || currentRoute == Routes.MENU || currentRoute == Routes.PROFILE) {
+            try {
+                val roomId = Preferences.activeRoomId
+                if (roomId > 0) {
+                    val response = ApiClient.getApiService().getOrders(roomId, 1, 50)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.code == 0 && body.data != null) {
+                        pendingOrderCount = body.data.count { it.status == "pending" || it.status == "preparing" }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 MealsBottomNavBar(
                     navController = navController,
-                    currentRoute = currentRoute
+                    currentRoute = currentRoute,
+                    pendingOrderCount = pendingOrderCount
                 )
             }
         }
@@ -293,6 +323,17 @@ fun NavGraph(
                     navController = navController
                 )
             }
+
+            // Room List screen - switch between joined rooms
+            composable(Routes.ROOM_LIST) {
+                RoomListScreen(
+                    onRoomSelected = {
+                        navController.navigate(Routes.MAIN) {
+                            popUpTo(Routes.MAIN) { inclusive = true }
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -303,7 +344,8 @@ fun NavGraph(
 @Composable
 private fun MealsBottomNavBar(
     navController: NavHostController,
-    currentRoute: String?
+    currentRoute: String?,
+    pendingOrderCount: Int = 0
 ) {
     val orangePrimary = Color(0xFFFF6B35)
     val grayDesc = Color(0xFF9E9E9E)
@@ -317,11 +359,33 @@ private fun MealsBottomNavBar(
 
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        imageVector = if (selected) item.selectedIcon else item.icon,
-                        contentDescription = item.label,
-                        modifier = Modifier.padding(bottom = 2.dp)
-                    )
+                    if (item.route == Routes.ORDER_HISTORY && pendingOrderCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    containerColor = Color(0xFFE53935),
+                                    contentColor = Color.White
+                                ) {
+                                    Text(
+                                        text = if (pendingOrderCount > 99) "99+" else pendingOrderCount.toString(),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (selected) item.selectedIcon else item.icon,
+                                contentDescription = item.label,
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = if (selected) item.selectedIcon else item.icon,
+                            contentDescription = item.label,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        )
+                    }
                 },
                 label = {
                     Text(

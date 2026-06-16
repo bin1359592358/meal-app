@@ -28,7 +28,8 @@ data class MenuUiState(
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val showSeasoningPanel: Boolean = false,
-    val selectedDishForSeasoning: DishDto? = null
+    val selectedDishForSeasoning: DishDto? = null,
+    val searchQuery: String = ""
 )
 
 /**
@@ -117,6 +118,26 @@ class MenuViewModel : ViewModel() {
     fun selectCategory(categoryId: Int) {
         _state.update { it.copy(selectedCategoryId = categoryId) }
         loadDishes(categoryId)
+    }
+
+    fun searchDishes(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+        if (query.isBlank()) {
+            // Reset to category-based loading
+            val catId = _state.value.selectedCategoryId
+            loadDishes(catId)
+        } else {
+            viewModelScope.launch {
+                _state.update { it.copy(isLoading = true) }
+                try {
+                    val roomId = Preferences.activeRoomId
+                    val dishes = MealRepository.getDishes(roomId, searchQuery = query).getOrThrow()
+                    _state.update { it.copy(dishes = dishes, isLoading = false) }
+                } catch (e: Exception) {
+                    _state.update { it.copy(isLoading = false, error = e.message ?: "搜索失败") }
+                }
+            }
+        }
     }
 
     fun refresh() {

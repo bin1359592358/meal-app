@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -70,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.meals.app.ui.enhancement.empty.MembersEmpty
 
 private val OrangePrimary = Color(0xFFFF6B35)
 private val PriceRed = Color(0xFFE53935)
@@ -326,6 +328,10 @@ fun ProfileScreen(
                             onRemoveMember = { viewModel.removeMember(member.user_id) }
                         )
                     }
+                } else {
+                    item {
+                        MembersEmpty()
+                    }
                 }
 
                 // Chef: Admin button
@@ -365,6 +371,58 @@ fun ProfileScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Switch rooms entry
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate(com.meals.app.ui.navigation.Routes.ROOM_LIST) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = OrangePrimary.copy(alpha = 0.06f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(OrangePrimary.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz,
+                                    contentDescription = null,
+                                    tint = OrangePrimary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "切换餐桌",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OrangePrimary
+                                )
+                                Text(
+                                    text = "查看已加入的所有餐桌并切换",
+                                    fontSize = 12.sp,
+                                    color = OrangePrimary.copy(alpha = 0.7f)
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = OrangePrimary.copy(alpha = 0.5f),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
