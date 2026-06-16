@@ -94,6 +94,7 @@ private val WelcomeLightColorScheme = lightColorScheme(
 fun WelcomeScreen(
     onNavigateToMain: () -> Unit,
     skipToRoomSetup: Boolean = false,
+    joinRoom: Boolean = false,
     viewModel: WelcomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -157,7 +158,7 @@ fun WelcomeScreen(
                                     fontSize = 14.sp
                                 )
                                 Spacer(modifier = Modifier.height(32.dp))
-                            } else if (!state.showRoomSetup) {
+                            } else if (!state.showRoomSetup && !joinRoom) {
                                 // Tab row for login/register
                                 AuthTabs(
                                     isRegisterMode = state.isRegisterMode,
@@ -212,12 +213,13 @@ fun WelcomeScreen(
                                     )
                                 }
                             } else {
-                                // Room setup after registration
+                                // Room setup after registration or from join entry
                                 RoomSetupSection(
                                     isLoading = state.isLoading,
                                     error = state.error,
                                     roomCode = state.roomCode,
                                     createdRoomCode = state.createdRoomCode,
+                                    joinMode = joinRoom || skipToRoomSetup,
                                     onRoomCodeChange = viewModel::updateRoomCode,
                                     onCreateRoom = { name -> viewModel.createRoom(name) },
                                     onJoinRoom = { viewModel.joinRoom() }
@@ -594,6 +596,7 @@ private fun RoomSetupSection(
     error: String?,
     roomCode: String,
     createdRoomCode: String?,
+    joinMode: Boolean = false,
     onRoomCodeChange: (String) -> Unit,
     onCreateRoom: (String) -> Unit,
     onJoinRoom: () -> Unit
@@ -605,7 +608,7 @@ private fun RoomSetupSection(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "🎉 注册成功！",
+            text = if (joinMode) "🍽️ 创建或加入餐桌" else "🎉 注册成功！",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = DarkText

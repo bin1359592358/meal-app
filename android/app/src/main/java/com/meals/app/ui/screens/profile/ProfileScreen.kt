@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
@@ -123,8 +124,8 @@ fun ProfileScreen(
 
     LaunchedEffect(uiState.roomClosed) {
         if (uiState.roomClosed) {
-            // Navigate back to welcome/join screen
-            navController.navigate("welcome") {
+            // Navigate to join/create room screen (not login)
+            navController.navigate(com.meals.app.ui.navigation.Routes.JOIN_ROOM) {
                 popUpTo(0) { inclusive = true }
             }
         }
@@ -364,6 +365,58 @@ fun ProfileScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Join / Create room entry
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate(com.meals.app.ui.navigation.Routes.JOIN_ROOM) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color(0xFF1976D2).copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color(0xFF1976D2),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "加入 / 创建餐桌",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1976D2)
+                                )
+                                Text(
+                                    text = "输入邀请码加入或新建一个餐桌",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1976D2).copy(alpha = 0.7f)
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = Color(0xFF90CAF9),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }

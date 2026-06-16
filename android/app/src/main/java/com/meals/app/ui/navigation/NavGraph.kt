@@ -52,6 +52,7 @@ import com.meals.app.ui.screens.welcome.WelcomeScreen
  */
 object Routes {
     const val WELCOME = "welcome"
+    const val JOIN_ROOM = "join_room"
     const val MAIN = "main"
     const val MENU = "menu"
     const val CART = "cart"
@@ -107,6 +108,7 @@ val bottomNavItems = listOf(
  */
 private val routesWithoutBottomBarPrefixes = setOf(
     Routes.WELCOME,
+    Routes.JOIN_ROOM,
     Routes.CART,
     "dish_edit/",
     Routes.OVERVIEW
@@ -164,6 +166,18 @@ fun NavGraph(
                     onNavigateToMain = {
                         navController.navigate(Routes.MAIN) {
                             popUpTo(Routes.WELCOME) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Join / Create room entry for logged-in users
+            composable(Routes.JOIN_ROOM) {
+                WelcomeScreen(
+                    joinRoom = true,
+                    onNavigateToMain = {
+                        navController.navigate(Routes.MAIN) {
+                            popUpTo(Routes.MAIN) { inclusive = true }
                         }
                     }
                 )

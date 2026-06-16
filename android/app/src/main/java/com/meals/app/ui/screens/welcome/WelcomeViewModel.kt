@@ -58,9 +58,11 @@ class WelcomeViewModel : ViewModel() {
             try {
                 val api = ApiClient.getApiService()
                 val response = api.getMyRooms()
-                val rooms = response.body()?.data
+                val allRooms = response.body()?.data
+                // Only auto-select active rooms; closed rooms should not re-enter the user
+                val rooms = allRooms?.filter { it.is_active }
                 if (!rooms.isNullOrEmpty()) {
-                    // Auto-select the first room
+                    // Auto-select the first active room
                     val room = rooms.first()
                     Preferences.activeRoomId = room.id
                     Preferences.activeRoomName = room.name
@@ -72,7 +74,7 @@ class WelcomeViewModel : ViewModel() {
                     Preferences.rooms = rooms
                     _state.value = _state.value.copy(isLoading = false, isLoggedIn = true)
                 } else {
-                    // No rooms — show room creation/join UI
+                    // No active rooms — show room creation/join UI
                     _state.value = _state.value.copy(isLoading = false, showRoomSetup = true)
                 }
             } catch (e: Exception) {
