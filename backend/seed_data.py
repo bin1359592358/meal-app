@@ -115,18 +115,18 @@ def seed() -> None:
 
         # Seasoning templates
         spice_select = json.dumps(
-            {"辣度": {"type": "select", "options": ["微辣", "中辣", "重辣"]}},
+            {"辣度": {"type": "single", "options": ["微辣", "中辣", "重辣"]}},
             ensure_ascii=False,
         )
         spice_and_toppings = json.dumps(
             {
-                "辣度": {"type": "select", "options": ["微辣", "中辣", "重辣"]},
+                "辣度": {"type": "single", "options": ["微辣", "中辣", "重辣"]},
                 "配料": {"type": "multi", "options": ["加葱", "加蒜", "加香菜", "加花生碎"]},
             },
             ensure_ascii=False,
         )
         sweetness = json.dumps(
-            {"甜度": {"type": "select", "options": ["少糖", "正常糖", "多糖"]}},
+            {"甜度": {"type": "single", "options": ["少糖", "正常糖", "多糖"]}},
             ensure_ascii=False,
         )
 

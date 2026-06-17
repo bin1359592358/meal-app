@@ -25,7 +25,8 @@ router = APIRouter(prefix="/rooms/{room_id}/orders")
 # Allowed status transitions: current_status -> set of valid next statuses
 VALID_TRANSITIONS: dict[str, set[str]] = {
     "pending": {"preparing", "cancelled"},
-    "preparing": {"completed", "cancelled"},
+    "preparing": {"served", "cancelled"},
+    "served": {"completed"},
     "completed": set(),
     "cancelled": set(),
 }
@@ -71,7 +72,7 @@ def order_summary(
         db.query(Order)
         .filter(
             Order.room_id == room_id,
-            Order.status.in_(["pending", "preparing", "completed"]),
+            Order.status.in_(["pending", "preparing", "served", "completed"]),
         )
         .all()
     )

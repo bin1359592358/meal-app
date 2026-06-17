@@ -323,7 +323,7 @@ fun MenuScreen(
                             if (isChef) {
                                 MenuEmptyChef(onAddDish = onNavigateToAdmin)
                             } else {
-                                MenuEmptyGuest()
+                                MenuEmptyGuest(onRefresh = { viewModel.refresh() })
                             }
                         } else if (state.dishes.isEmpty()) {
                             // Category selected but no dishes in it

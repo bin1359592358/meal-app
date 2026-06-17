@@ -165,7 +165,7 @@ fun NavGraph(
                     val response = ApiClient.getApiService().getOrders(roomId, 1, 50)
                     val body = response.body()
                     if (response.isSuccessful && body?.code == 0 && body.data != null) {
-                        pendingOrderCount = body.data.count { it.status == "pending" || it.status == "preparing" }
+                        pendingOrderCount = body.data.count { it.status == "pending" || it.status == "preparing" || it.status == "served" }
                     }
                 }
             } catch (_: Exception) {}

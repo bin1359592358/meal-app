@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -210,7 +211,7 @@ private fun OrderDetailContent(
         }
 
         // Chef action buttons
-        if (isChef && order.status.lowercase() in listOf("pending", "preparing")) {
+        if (isChef && order.status.lowercase() in listOf("pending", "preparing", "served")) {
             item {
                 StatusActionButtons(
                     currentStatus = order.status.lowercase(),
@@ -277,6 +278,7 @@ private fun StatusBadgeLarge(status: String) {
     val (backgroundColor, textColor, label) = when (status.lowercase()) {
         "pending" -> Triple(OrangePrimary.copy(alpha = 0.1f), OrangePrimary, "待处理")
         "preparing" -> Triple(Color(0xFF2196F3).copy(alpha = 0.1f), Color(0xFF2196F3), "制作中")
+        "served" -> Triple(Color(0xFF9C27B0).copy(alpha = 0.1f), Color(0xFF9C27B0), "已上桌")
         "completed" -> Triple(StatusGreen.copy(alpha = 0.1f), StatusGreen, "已完成")
         "cancelled" -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, "已取消")
         else -> Triple(StatusGray.copy(alpha = 0.1f), StatusGray, status)
@@ -454,13 +456,13 @@ private fun StatusActionButtons(
             }
 
             "preparing" -> {
-                // Primary action: mark complete
+                // Primary action: mark served (上桌)
                 ActionCard(
-                    icon = Icons.Default.CheckCircle,
-                    label = "标记完成",
-                    subtitle = "菜品已全部做好",
-                    containerColor = StatusGreen,
-                    onClick = { onUpdateStatus("completed") }
+                    icon = Icons.Default.Done,
+                    label = "标记上桌",
+                    subtitle = "菜品已做好，可以上桌了",
+                    containerColor = Color(0xFF9C27B0),
+                    onClick = { onUpdateStatus("served") }
                 )
 
                 // Secondary action: cancel
@@ -472,6 +474,17 @@ private fun StatusActionButtons(
                     contentColor = PriceRed,
                     borderColor = PriceRed.copy(alpha = 0.3f),
                     onClick = { onUpdateStatus("cancelled") }
+                )
+            }
+
+            "served" -> {
+                // Final action: mark complete
+                ActionCard(
+                    icon = Icons.Default.CheckCircle,
+                    label = "标记完成",
+                    subtitle = "用餐结束，订单完成",
+                    containerColor = StatusGreen,
+                    onClick = { onUpdateStatus("completed") }
                 )
             }
         }

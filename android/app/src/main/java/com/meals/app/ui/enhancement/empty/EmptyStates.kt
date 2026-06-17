@@ -48,14 +48,14 @@ fun MenuEmptyChef(onAddDish: () -> Unit) {
 }
 
 @Composable
-fun MenuEmptyGuest() {
+fun MenuEmptyGuest(onRefresh: () -> Unit) {
     EmptyStateContainer(
         icon = Icons.Default.RestaurantMenu,
         iconColor = GrayDescription,
         title = "主厨正在准备菜单",
         description = "请耐心等待，菜品马上就好",
-        actionLabel = null,
-        onAction = null
+        actionLabel = "刷新菜单",
+        onAction = onRefresh
     )
 }
 
