@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.meals.app.data.dto.RoomDto
 import com.meals.app.data.local.Preferences
 import com.meals.app.data.remote.ApiClient
+import com.meals.app.ui.screens.menu.CartStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,6 +58,9 @@ class RoomSwitchViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                // Clear cart when switching rooms to avoid cross-room cart data
+                CartStore.clear()
+
                 Preferences.activeRoomId = room.id
                 Preferences.activeRoomName = room.name
                 Preferences.activeRoomCode = room.code
@@ -105,9 +109,32 @@ class RoomSwitchViewModel : ViewModel() {
                     if (room.id == Preferences.activeRoomId) {
                         Preferences.clearActiveRoom()
                     }
-                    // Reload rooms from server
-                    loadRooms()
-                    _uiState.update { it.copy(isLoading = false, roomLeft = true) }
+
+                    // M14: Remove the affected room from the cached rooms list
+                    val updatedCachedRooms = Preferences.rooms.filter { it.id != room.id }
+                    Preferences.rooms = updatedCachedRooms
+
+                    // H11: Await loadRooms completion before setting roomLeft to avoid race condition
+                    // Inline the load logic so we don't fire-and-forget a new coroutine
+                    try {
+                        val roomsResponse = ApiClient.getApiService().getMyRooms()
+                        val roomsBody = roomsResponse.body()
+                        if (roomsResponse.isSuccessful && roomsBody?.code == 0 && roomsBody.data != null) {
+                            val rooms = roomsBody.data
+                            _uiState.update {
+                                it.copy(
+                                    rooms = rooms,
+                                    currentRoomId = Preferences.activeRoomId,
+                                    isLoading = false,
+                                    roomLeft = true
+                                )
+                            }
+                        } else {
+                            _uiState.update { it.copy(isLoading = false, roomLeft = true) }
+                        }
+                    } catch (e: Exception) {
+                        _uiState.update { it.copy(isLoading = false, roomLeft = true) }
+                    }
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = body?.message ?: "操作失败") }
                 }

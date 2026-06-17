@@ -53,11 +53,38 @@ class MenuViewModel : ViewModel() {
     private val _state = MutableStateFlow(MenuUiState())
     val state: StateFlow<MenuUiState> = _state.asStateFlow()
 
+    /** Tracks which roomId was used for the last data load to detect room switches. */
+    private var lastLoadedRoomId: Int = -1
+
     init {
         // Restore cart from CartStore if available (e.g. returning from cart screen)
         _state.update { it.copy(cartItems = CartStore.items.value) }
+        lastLoadedRoomId = Preferences.activeRoomId
         loadCategories()
         loadAllDishes()
+    }
+
+    /**
+     * H3: Check if the active room has changed since last load.
+     * If so, clear cart and reload all data for the new room.
+     */
+    fun checkAndReload() {
+        val currentRoomId = Preferences.activeRoomId
+        if (currentRoomId != lastLoadedRoomId) {
+            lastLoadedRoomId = currentRoomId
+            CartStore.clear()
+            _state.update {
+                it.copy(
+                    cartItems = emptyMap(),
+                    categories = emptyList(),
+                    dishes = emptyList(),
+                    allDishes = emptyList(),
+                    selectedCategoryId = null
+                )
+            }
+            loadCategories()
+            loadAllDishes()
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -68,7 +95,9 @@ class MenuViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                val categories = MealRepository.getCategories(Preferences.activeRoomId).getOrThrow()
+                val roomId = Preferences.activeRoomId
+                lastLoadedRoomId = roomId
+                val categories = MealRepository.getCategories(roomId).getOrThrow()
                 _state.update { current ->
                     val newState = current.copy(
                         categories = categories,
@@ -172,6 +201,11 @@ class MenuViewModel : ViewModel() {
         quantity: Int = 1,
         seasoningSelections: Map<String, List<String>> = emptyMap()
     ) {
+        // M11: Prevent adding sold-out dishes to cart
+        if (!dish.is_available) {
+            _state.update { it.copy(error = "该菜品已售罄") }
+            return
+        }
         _state.update { current ->
             val existing = current.cartItems[dish.id]
             val newQuantity = (existing?.quantity ?: 0) + quantity

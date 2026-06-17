@@ -41,8 +41,11 @@ class DishEditViewModel : ViewModel() {
     val uiState: StateFlow<DishEditUiState> = _uiState.asStateFlow()
 
     private var dishId: Int = -1
+    private var initialized = false
 
     fun init(dishId: Int) {
+        if (initialized) return
+        initialized = true
         this.dishId = dishId
         _uiState.update { it.copy(isEditing = dishId != -1) }
         loadCategories()

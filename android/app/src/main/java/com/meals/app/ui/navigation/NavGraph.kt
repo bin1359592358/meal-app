@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,7 +35,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -155,20 +155,36 @@ fun NavGraph(
     val startDestination = if (hasToken && hasActiveRoom) Routes.MAIN else Routes.WELCOME
 
     var pendingOrderCount by remember { mutableIntStateOf(0) }
+    var lastBadgeFetchTime by remember { mutableLongStateOf(0L) }
 
-    // Load pending order count for badge
+    // C3: Observe 401/token expiry from ApiClient and navigate to WELCOME
+    LaunchedEffect(Unit) {
+        ApiClient.isLoggedOut.collect { loggedOut ->
+            if (loggedOut) {
+                navController.navigate(Routes.WELCOME) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
+    }
+
+    // Load pending order count for badge (M12: debounce - only fetch every 30 seconds)
     LaunchedEffect(currentRoute) {
         if (currentRoute == Routes.ORDER_HISTORY || currentRoute == Routes.MENU || currentRoute == Routes.PROFILE) {
-            try {
-                val roomId = Preferences.activeRoomId
-                if (roomId > 0) {
-                    val response = ApiClient.getApiService().getOrders(roomId, 1, 50)
-                    val body = response.body()
-                    if (response.isSuccessful && body?.code == 0 && body.data != null) {
-                        pendingOrderCount = body.data.count { it.status == "pending" || it.status == "preparing" || it.status == "served" }
+            val now = System.currentTimeMillis()
+            if (now - lastBadgeFetchTime > 30_000L) {
+                lastBadgeFetchTime = now
+                try {
+                    val roomId = Preferences.activeRoomId
+                    if (roomId > 0) {
+                        val response = ApiClient.getApiService().getOrders(roomId, 1, 50)
+                        val body = response.body()
+                        if (response.isSuccessful && body?.code == 0 && body.data != null) {
+                            pendingOrderCount = body.data.count { it.status == "pending" || it.status == "preparing" || it.status == "served" }
+                        }
                     }
-                }
-            } catch (_: Exception) {}
+                } catch (_: Exception) {}
+            }
         }
     }
 
@@ -399,7 +415,7 @@ private fun MealsBottomNavBar(
                 onClick = {
                     if (currentRoute != item.route) {
                         navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
+                            popUpTo(Routes.MENU) {
                                 saveState = true
                             }
                             launchSingleTop = true

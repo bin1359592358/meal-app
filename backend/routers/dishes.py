@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from middleware import require_chef, require_member
-from models import Dish, User
+from models import Category, Dish, User
 from schemas import ApiResponse, DishCreate, DishResponse, DishUpdate
 
 router = APIRouter(prefix="/rooms/{room_id}/dishes")
@@ -34,7 +34,8 @@ def list_dishes(
         base_query = base_query.filter(Dish.category_id == category_id)
 
     if q:
-        base_query = base_query.filter(Dish.name.like(f"%{q}%"))
+        escaped_q = q.replace("%", r"\%").replace("_", r"\_")
+        base_query = base_query.filter(Dish.name.like(f"%{escaped_q}%", escape="\\"))
 
     base_query = base_query.order_by(Dish.sort_order)
     total = base_query.count()
@@ -79,6 +80,11 @@ def create_dish(
     db: Session = Depends(get_db),
 ):
     """Create a new dish. Chef only."""
+    # Validate category belongs to this room
+    category = db.query(Category).filter(Category.id == body.category_id, Category.room_id == room_id).first()
+    if not category:
+        raise HTTPException(status_code=400, detail="分类不存在或不属于此餐桌")
+
     dish = Dish(
         category_id=body.category_id,
         room_id=room_id,
@@ -113,6 +119,12 @@ def update_dish(
     )
     if not dish:
         raise HTTPException(status_code=404, detail="菜品不存在")
+
+    # Validate category belongs to this room if provided
+    if body.category_id is not None:
+        category = db.query(Category).filter(Category.id == body.category_id, Category.room_id == room_id).first()
+        if not category:
+            raise HTTPException(status_code=400, detail="分类不存在或不属于此餐桌")
 
     update_data = body.model_dump(exclude_unset=True)
 

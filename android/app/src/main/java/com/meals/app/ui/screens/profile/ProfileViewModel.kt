@@ -214,6 +214,8 @@ class ProfileViewModel : ViewModel() {
                 val response = ApiClient.getApiService().closeRoom(roomId)
                 val body = response.body()
                 if (response.isSuccessful && body?.code == 0) {
+                    // Remove closed room from cached rooms list
+                    Preferences.rooms = Preferences.rooms.filter { it.id != roomId }
                     Preferences.clearActiveRoom()
                     _uiState.update {
                         it.copy(
@@ -240,6 +242,8 @@ class ProfileViewModel : ViewModel() {
                 val response = ApiClient.getApiService().leaveRoom(roomId)
                 val body = response.body()
                 if (response.isSuccessful && body?.code == 0) {
+                    // Remove left room from cached rooms list
+                    Preferences.rooms = Preferences.rooms.filter { it.id != roomId }
                     Preferences.clearActiveRoom()
                     _uiState.update {
                         it.copy(

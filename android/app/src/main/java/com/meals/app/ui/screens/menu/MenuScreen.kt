@@ -180,6 +180,11 @@ fun MenuScreen(
     val isChef = Preferences.role == "chef"
     val roomName = Preferences.activeRoomName ?: "点菜"
 
+    // H3: Detect room changes and reload data if the active room has changed
+    LaunchedEffect(Unit) {
+        viewModel.checkAndReload()
+    }
+
     // Random dish picker state
     var showRandomPicker by remember { mutableStateOf(false) }
     var randomDish by remember { mutableStateOf<DishDto?>(null) }

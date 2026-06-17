@@ -34,6 +34,7 @@ import androidx.navigation.NavHostController
 import com.meals.app.data.local.Preferences
 import com.meals.app.ui.components.OrderCard
 import com.meals.app.ui.enhancement.empty.OrdersEmpty
+import com.meals.app.ui.navigation.Routes
 
 private val OrangePrimary = Color(0xFFFF6B35)
 
@@ -108,7 +109,7 @@ fun OrderHistoryScreen(
 
                 uiState.orders.isEmpty() -> {
                     OrdersEmpty(
-                        onGoToMenu = { /* Navigate back to menu */ }
+                        onGoToMenu = { navController.navigate(Routes.MENU) }
                     )
                 }
 

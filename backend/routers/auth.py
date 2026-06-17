@@ -1,9 +1,10 @@
 """Authentication routes: register, login, and PIN management."""
 
 import re
+import time as _time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from auth import generate_token, hash_pin, verify_pin
@@ -112,11 +113,21 @@ def login(body: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == body.username).first()
     if not user or not verify_pin(body.pin, user.pin_hash):
         _record_failure(body.username)
-        attempts_left = MAX_FAILED_ATTEMPTS - _login_attempts.get(body.username, 0)
-        detail = f"用户名或PIN错误（剩余{attempts_left}次尝试）" if attempts_left > 0 else "登录尝试次数过多，请稍后再试"
+        if body.username in _lockout_until and _time.time() < _lockout_until[body.username]:
+            detail = "登录尝试次数过多，请60秒后再试"
+        else:
+            attempts_left = MAX_FAILED_ATTEMPTS - _login_attempts.get(body.username, 0)
+            detail = f"用户名或PIN错误（剩余{attempts_left}次尝试）"
         raise HTTPException(status_code=401, detail=detail)
 
     _clear_failure(body.username)
+
+    # Clean up expired sessions
+    now_iso = datetime.now(timezone.utc).isoformat()
+    db.query(SessionModel).filter(
+        SessionModel.user_id == user.id,
+        SessionModel.expires_at < now_iso,
+    ).delete(synchronize_session=False)
 
     # Generate token and create session
     token = generate_token()
@@ -145,10 +156,51 @@ def change_pin(
     db: Session = Depends(get_db),
 ):
     """Change the authenticated user's PIN."""
+    lockout_key = f"pin_change:{current_user.id}"
+    _check_lockout(lockout_key)
+
     if not verify_pin(body.old_pin, current_user.pin_hash):
-        raise HTTPException(status_code=400, detail="旧PIN错误")
+        _record_failure(lockout_key)
+        if lockout_key in _lockout_until and _time.time() < _lockout_until[lockout_key]:
+            detail = "PIN修改尝试次数过多，请60秒后再试"
+        else:
+            attempts_left = MAX_FAILED_ATTEMPTS - _login_attempts.get(lockout_key, 0)
+            detail = f"旧PIN错误（剩余{attempts_left}次尝试）"
+        raise HTTPException(status_code=400, detail=detail)
+
+    _clear_failure(lockout_key)
 
     current_user.pin_hash = hash_pin(body.new_pin)
+
+    # Invalidate all other sessions
+    db.query(SessionModel).filter(
+        SessionModel.user_id == current_user.id,
+    ).delete(synchronize_session=False)
+
+    # Create a new session for the current request
+    new_token = generate_token()
+    new_session = SessionModel(
+        user_id=current_user.id,
+        token=new_token,
+        expires_at=(datetime.now(timezone.utc) + timedelta(days=settings.TOKEN_EXPIRE_DAYS)).isoformat(),
+    )
+    db.add(new_session)
     db.commit()
 
-    return ApiResponse(message="PIN修改成功")
+    return ApiResponse(data={"token": new_token}, message="PIN修改成功，请重新登录")
+
+
+@router.post("/logout")
+def logout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    authorization: str = Header(default=""),
+):
+    """Invalidate the current session token."""
+    token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else ""
+    if token:
+        session = db.query(SessionModel).filter(SessionModel.token == token).first()
+        if session:
+            db.delete(session)
+            db.commit()
+    return ApiResponse(message="已登出")

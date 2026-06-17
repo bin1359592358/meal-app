@@ -144,7 +144,7 @@ class OrderItem(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False, index=True)
-    dish_id = Column(Integer, nullable=False)
+    dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
     dish_name = Column(String(50), nullable=False)
     dish_price = Column(Float, nullable=False)
     quantity = Column(Integer, nullable=False)

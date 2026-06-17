@@ -1,9 +1,10 @@
 """Room management routes: create, join, view, leave, and member removal."""
 
-import random
+import secrets
 import string
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -24,7 +25,7 @@ router = APIRouter(prefix="/rooms")
 def _generate_room_code(length: int = 6) -> str:
     """Generate a random 6-character code using uppercase letters and digits."""
     chars = string.ascii_uppercase + string.digits
-    return "".join(random.choices(chars, k=length))
+    return "".join(secrets.choice(chars) for _ in range(length))
 
 
 def _build_room_response(room: Room, db: Session) -> dict:
@@ -78,7 +79,17 @@ def create_room(
     # Add creator as chef member
     member = RoomMember(room_id=room.id, user_id=current_user.id, role="chef")
     db.add(member)
-    db.commit()
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Retry with a new code (race condition: duplicate code)
+        room.code = _generate_room_code()
+        db.add(room)
+        db.add(member)
+        db.commit()
+
     db.refresh(room)
 
     return ApiResponse(data=_build_room_response(room, db))
@@ -221,17 +232,16 @@ def close_room(
     current_user: User = Depends(require_chef),
     db: Session = Depends(get_db),
 ):
-    """Toggle room active status. Only the chef can do this."""
+    """Close a room. Only the chef can do this."""
     room = db.query(Room).filter(Room.id == room_id).first()
     if not room:
         raise HTTPException(status_code=404, detail="餐桌不存在")
 
-    room.is_active = not room.is_active
+    room.is_active = False
     db.commit()
     db.refresh(room)
 
-    status_text = "已开启" if room.is_active else "已关闭"
-    return ApiResponse(data=_build_room_response(room, db))
+    return ApiResponse(data=_build_room_response(room, db), message="餐桌已关闭")
 
 
 @router.patch("/{room_id}/refresh-code")

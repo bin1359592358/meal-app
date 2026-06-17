@@ -135,6 +135,14 @@ fun ProfileScreen(
         }
     }
 
+    LaunchedEffect(uiState.loggedOut) {
+        if (uiState.loggedOut) {
+            navController.navigate(com.meals.app.ui.navigation.Routes.WELCOME) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     // Nickname dialog
     if (showNicknameDialog) {
         EditNicknameDialog(

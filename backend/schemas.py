@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ──────────────────────────── Auth / User ────────────────────────────
@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 class UserRegister(BaseModel):
     username: str
-    nickname: str
+    nickname: str = Field(..., min_length=1, max_length=50)
     pin: str
 
     @field_validator("username")
@@ -37,6 +37,13 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     username: str
     pin: str
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v: str) -> str:
+        if not re.match(r"^\d{4,6}$", v):
+            raise ValueError("PIN must be 4-6 digits.")
+        return v
 
 
 class UserResponse(BaseModel):
@@ -66,7 +73,7 @@ class PinChange(BaseModel):
 
 
 class NicknameUpdate(BaseModel):
-    nickname: str
+    nickname: str = Field(..., min_length=1, max_length=50)
 
 
 # ──────────────────────────────── Room ────────────────────────────────
@@ -84,11 +91,11 @@ class MemberResponse(BaseModel):
 
 
 class RoomCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=50)
 
 
 class RoomRename(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=50)
 
 
 class RoomJoin(BaseModel):
@@ -140,7 +147,7 @@ class DishCreate(BaseModel):
     category_id: int
     name: str
     description: str = ""
-    price: float
+    price: float = Field(..., gt=0)
     image_url: str | None = None
     tags: list[str] = []
     seasonings: list | None = None
@@ -159,7 +166,7 @@ class DishUpdate(BaseModel):
     category_id: int | None = None
     name: str | None = None
     description: str | None = None
-    price: float | None = None
+    price: float | None = Field(None, gt=0)
     image_url: str | None = None
     tags: list[str] | None = None
     seasonings: list | None = None
@@ -221,14 +228,14 @@ class DishResponse(BaseModel):
 
 class OrderItemCreate(BaseModel):
     dish_id: int
-    quantity: int
+    quantity: int = Field(..., ge=1, le=999)
     seasonings: dict | None = None
 
 
 class OrderCreate(BaseModel):
     items: list[OrderItemCreate]
     note: str = ""
-    people_count: int = 1
+    people_count: int = Field(default=1, ge=1, le=100)
 
 
 class OrderItemResponse(BaseModel):

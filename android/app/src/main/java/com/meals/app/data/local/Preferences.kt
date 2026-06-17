@@ -95,7 +95,9 @@ object Preferences {
         get() = !token.isNullOrEmpty()
 
     fun clear() {
+        val savedServerUrl = serverUrl
         prefs.edit().clear().apply()
+        serverUrl = savedServerUrl
     }
 
     fun clearActiveRoom() {

@@ -1,8 +1,9 @@
 """Authentication and authorization middleware / dependencies."""
 
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import Depends, HTTPException, Path
+from fastapi import Depends, Header, HTTPException, Path
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -50,6 +51,16 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="User not found.")
 
     return user
+
+
+def get_current_session_token(authorization: str = Header(default="")) -> Optional[str]:
+    """Extract and return the bearer token from the Authorization header.
+
+    Returns None if the header is missing or malformed.
+    """
+    if authorization.startswith("Bearer "):
+        return authorization[7:]
+    return None
 
 
 def require_chef(

@@ -181,9 +181,23 @@ def create_order(
     if not body.items:
         raise HTTPException(status_code=400, detail="订单至少需要包含一个菜品")
 
+    # Block orders on closed rooms
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room or not room.is_active:
+        raise HTTPException(status_code=400, detail="餐桌已关闭，无法下单")
+
+    # Merge duplicate dish_ids
+    merged_items = {}
+    for item in body.items:
+        if item.dish_id in merged_items:
+            merged_items[item.dish_id].quantity += item.quantity
+        else:
+            merged_items[item.dish_id] = item
+    body_items = list(merged_items.values())
+
     # Phase 1: validate all dishes and collect info
     dish_map: dict[int, Dish] = {}
-    for item in body.items:
+    for item in body_items:
         dish = (
             db.query(Dish)
             .filter(Dish.id == item.dish_id, Dish.room_id == room_id)
@@ -209,7 +223,7 @@ def create_order(
     db.add(order)
     db.flush()  # get order.id
 
-    for item in body.items:
+    for item in body_items:
         dish = dish_map[item.dish_id]
         seasoning_text = ""
         if item.seasonings:
@@ -259,6 +273,12 @@ def update_order_status(
     )
     if not order:
         raise HTTPException(status_code=404, detail="订单不存在")
+
+    # Block status updates on closed rooms (except cancellation)
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room or not room.is_active:
+        if body.status != "cancelled":
+            raise HTTPException(status_code=400, detail="餐桌已关闭，无法更新订单状态")
 
     is_chef = _is_chef(room_id, current_user.id, db)
 
