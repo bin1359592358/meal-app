@@ -72,25 +72,25 @@ def create_room(
     while db.query(Room).filter(Room.code == code).first():
         code = _generate_room_code()
 
-    room = Room(name=body.name, code=code, chef_id=current_user.id)
-    db.add(room)
-    db.flush()
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            room = Room(name=body.name, code=code, chef_id=current_user.id)
+            db.add(room)
+            db.flush()
 
-    # Add creator as chef member
-    member = RoomMember(room_id=room.id, user_id=current_user.id, role="chef")
-    db.add(member)
-
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        # Retry with a new code (race condition: duplicate code)
-        room.code = _generate_room_code()
-        db.add(room)
-        db.add(member)
-        db.commit()
-
-    db.refresh(room)
+            # Add creator as chef member
+            member = RoomMember(room_id=room.id, user_id=current_user.id, role="chef")
+            db.add(member)
+            db.commit()
+            db.refresh(room)
+            break
+        except IntegrityError:
+            db.rollback()
+            if attempt == max_retries - 1:
+                raise HTTPException(status_code=409, detail="餐桌创建失败，请重试")
+            # Generate a fresh code and loop to create new objects
+            code = _generate_room_code()
 
     return ApiResponse(data=_build_room_response(room, db))
 

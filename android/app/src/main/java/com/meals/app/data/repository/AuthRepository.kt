@@ -53,9 +53,15 @@ object AuthRepository {
         val response = api.changePin(PinChangeRequest(oldPin, newPin))
         val body = response.body()
         if (response.isSuccessful && body?.code == 0) {
+            // Extract new token from response data
+            val data = body.data
+            if (data is Map<*, *> && data["token"] is String) {
+                Preferences.token = data["token"] as String
+            }
             Result.success(Unit)
         } else {
-            Result.failure(ApiException(body?.message ?: "Failed to change PIN"))
+            val errorDetail = parseErrorBody(response.errorBody())
+            Result.failure(ApiException(errorDetail ?: body?.message ?: "PIN修改失败"))
         }
     }
 
@@ -83,7 +89,16 @@ object AuthRepository {
         }
     }
 
-    fun logout() {
+    suspend fun logout() {
+        // Best-effort server-side logout
+        try {
+            val token = Preferences.token
+            if (!token.isNullOrBlank()) {
+                api.logout("Bearer $token")
+            }
+        } catch (_: Exception) {
+            // Ignore server errors - still clear local state
+        }
         Preferences.clear()
         ApiClient.reset()
     }

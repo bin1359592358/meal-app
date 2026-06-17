@@ -164,6 +164,7 @@ fun NavGraph(
                 navController.navigate(Routes.WELCOME) {
                     popUpTo(0) { inclusive = true }
                 }
+                ApiClient.clearLoggedOutFlag()
             }
         }
     }

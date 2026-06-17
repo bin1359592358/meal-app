@@ -16,7 +16,10 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<ApiResponse<AuthResponse>>
 
     @POST("api/auth/pin/change")
-    suspend fun changePin(@Body request: PinChangeRequest): Response<ApiResponse<Unit>>
+    suspend fun changePin(@Body request: PinChangeRequest): Response<ApiResponse<Any>>
+
+    @POST("api/auth/logout")
+    suspend fun logout(@Header("Authorization") auth: String): Response<ApiResponse<Unit>>
 
     // ==================== Users ====================
 

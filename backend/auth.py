@@ -20,26 +20,44 @@ def generate_token() -> str:
     return secrets.token_hex(16)
 
 
-def serialize_seasonings(seasonings_data: dict, user_selections: dict) -> str:
+def serialize_seasonings(seasonings_data, user_selections: dict) -> str:
     """Convert seasoning definitions and user selections into readable text.
 
     Args:
-        seasonings_data: The dish's seasoning configuration, e.g.
-            {"辣度": {"type": "select", "options": ["微辣", "中辣", "重辣"]},
-             "加料": {"type": "multi", "options": ["加葱", "加蒜", "加香菜"]},
-             "甜度": {"type": "number", "min": 0, "max": 5}}
+        seasonings_data: The dish's seasoning configuration. May be a dict
+            (e.g. {"辣度": {"type": "select", "options": [...]}}) or a list
+            (e.g. [{"name": "辣度", "type": "single", "options": [...]}]).
         user_selections: The user's choices, e.g.
             {"辣度": "中辣", "加料": ["加葱", "加蒜"], "甜度": 3}
 
     Returns:
         A comma-separated readable string like "中辣，加葱加蒜，甜度3"
     """
+    # Normalize: convert list format to dict format if needed
+    if isinstance(seasonings_data, list):
+        seasonings_data = {
+            item["name"]: item
+            for item in seasonings_data
+            if isinstance(item, dict) and "name" in item
+        }
+
     if not seasonings_data or not user_selections:
         return ""
 
+    # Normalize user_selections values that come as single-element lists
+    normalized_selections: dict = {}
+    for key, value in user_selections.items():
+        if isinstance(value, list) and len(value) == 1:
+            # Single-element list: treat as single-select string
+            normalized_selections[key] = value[0]
+        elif isinstance(value, list) and len(value) > 1:
+            normalized_selections[key] = value
+        else:
+            normalized_selections[key] = value
+
     parts: list[str] = []
 
-    for key, value in user_selections.items():
+    for key, value in normalized_selections.items():
         if value is None:
             continue
 
@@ -50,7 +68,12 @@ def serialize_seasonings(seasonings_data: dict, user_selections: dict) -> str:
             # Numeric selection: prefix with key name (e.g., "甜度3")
             parts.append(f"{key}{value}")
         elif isinstance(value, str) and value:
-            # Single select: just the value (e.g., "中辣")
-            parts.append(value)
+            # Try to parse as number for scale-type seasonings
+            try:
+                num = int(value)
+                parts.append(f"{key}{num}")
+            except ValueError:
+                # Single select: just the value (e.g., "中辣")
+                parts.append(value)
 
     return "\uff0c".join(parts)  # Chinese comma separator

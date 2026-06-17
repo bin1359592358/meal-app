@@ -70,12 +70,21 @@ class CartViewModel : ViewModel() {
             }
             current.copy(items = updatedItems)
         }
+        // Sync back to CartStore
+        syncToCartStore()
     }
 
     fun removeItem(dishId: Int) {
         _state.update { current ->
             current.copy(items = current.items.filter { it.dish.id != dishId })
         }
+        syncToCartStore()
+    }
+
+    private fun syncToCartStore() {
+        val currentItems = _state.value.items
+        val map = currentItems.associateBy { it.dish.id }
+        CartStore.updateItems(map)
     }
 
     // ──────────────────────────────────────────────

@@ -135,6 +135,12 @@ def delete_category(
     if dish_count > 0:
         raise HTTPException(status_code=400, detail="该分类下还有菜品，无法删除")
 
+    # Hard-delete soft-deleted dishes in this category first (avoids FK constraint errors)
+    db.query(Dish).filter(
+        Dish.category_id == category_id,
+        Dish.is_deleted == True,
+    ).delete(synchronize_session=False)
+
     db.delete(category)
     db.commit()
 

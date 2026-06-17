@@ -42,6 +42,7 @@ object ApiClient {
             // Token expired or invalid - clear auth data
             Preferences.clear()
             _isLoggedOut.value = true
+            apiService = null  // Force recreation on next use
             null // Don't retry the request
         } else {
             null
@@ -77,6 +78,10 @@ object ApiClient {
         return apiService ?: synchronized(this) {
             apiService ?: create(Preferences.serverUrl).also { apiService = it }
         }
+    }
+
+    fun clearLoggedOutFlag() {
+        _isLoggedOut.value = false
     }
 
     fun reset() {

@@ -13,6 +13,7 @@ from models import Dish, Order, OrderItem, Room, User
 from schemas import (
     ApiResponse,
     OrderCreate,
+    OrderItemCreate,
     OrderItemResponse,
     OrderResponse,
     OrderSummaryItem,
@@ -72,7 +73,7 @@ def order_summary(
         db.query(Order)
         .filter(
             Order.room_id == room_id,
-            Order.status.in_(["pending", "preparing", "served", "completed"]),
+            Order.status.in_(["pending", "preparing", "served"]),
         )
         .all()
     )
@@ -186,14 +187,25 @@ def create_order(
     if not room or not room.is_active:
         raise HTTPException(status_code=400, detail="餐桌已关闭，无法下单")
 
-    # Merge duplicate dish_ids
-    merged_items = {}
+    # Merge duplicate dishes, keyed by (dish_id, canonical seasonings JSON)
+    # so items with different customizations stay separate.
+    merged_items: dict[tuple, OrderItemCreate] = {}
     for item in body.items:
-        if item.dish_id in merged_items:
-            merged_items[item.dish_id].quantity += item.quantity
+        seasonings_key = json.dumps(item.seasonings or {}, sort_keys=True, ensure_ascii=False)
+        merge_key = (item.dish_id, seasonings_key)
+        if merge_key in merged_items:
+            merged_items[merge_key].quantity += item.quantity
         else:
-            merged_items[item.dish_id] = item
+            merged_items[merge_key] = item
     body_items = list(merged_items.values())
+
+    # Re-validate merged quantity ceiling
+    for merge_key, merged in merged_items.items():
+        if merged.quantity > 999:
+            raise HTTPException(
+                status_code=400,
+                detail=f"单品数量超过上限（最大999）",
+            )
 
     # Phase 1: validate all dishes and collect info
     dish_map: dict[int, Dish] = {}
