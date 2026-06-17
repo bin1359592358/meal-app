@@ -16,8 +16,8 @@ def verify_pin(pin: str, pin_hash: str) -> bool:
 
 
 def generate_token() -> str:
-    """Generate a cryptographically secure 64-character hex token."""
-    return secrets.token_hex(32)
+    """Generate a cryptographically secure 32-character hex token."""
+    return secrets.token_hex(16)
 
 
 def serialize_seasonings(seasonings_data: dict, user_selections: dict) -> str:

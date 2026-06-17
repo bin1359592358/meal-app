@@ -1,6 +1,6 @@
 """Category routes: CRUD operations scoped to a room."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -14,16 +14,20 @@ router = APIRouter(prefix="/rooms/{room_id}/categories")
 @router.get("")
 def list_categories(
     room_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(require_member),
     db: Session = Depends(get_db),
 ):
     """List all categories in the room, ordered by sort_order, with dish counts."""
-    categories = (
+    base_query = (
         db.query(Category)
         .filter(Category.room_id == room_id)
         .order_by(Category.sort_order)
-        .all()
     )
+
+    total = base_query.count()
+    categories = base_query.offset((page - 1) * page_size).limit(page_size).all()
 
     result = []
     for cat in categories:
@@ -46,7 +50,12 @@ def list_categories(
             ).model_dump()
         )
 
-    return ApiResponse(data=result)
+    return ApiResponse(
+        data=result,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.post("")

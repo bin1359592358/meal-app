@@ -1,12 +1,25 @@
 package com.meals.app.data.repository
 
+import com.google.gson.Gson
 import com.meals.app.data.dto.*
 import com.meals.app.data.local.Preferences
 import com.meals.app.data.remote.ApiClient
+import okhttp3.ResponseBody
 
 object AuthRepository {
 
     private val api get() = ApiClient.getApiService()
+    private val gson = Gson()
+
+    private fun parseErrorBody(body: ResponseBody?): String? {
+        return try {
+            val json = body?.string() ?: return null
+            val map = gson.fromJson(json, Map::class.java)
+            map["detail"] as? String ?: map["message"] as? String
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     suspend fun register(
         username: String,
@@ -19,7 +32,8 @@ object AuthRepository {
             saveAuthData(body.data)
             Result.success(body.data)
         } else {
-            Result.failure(ApiException(body?.message ?: "Registration failed"))
+            val errorDetail = parseErrorBody(response.errorBody())
+            Result.failure(ApiException(errorDetail ?: body?.message ?: "注册失败"))
         }
     }
 
@@ -30,7 +44,8 @@ object AuthRepository {
             saveAuthData(body.data)
             Result.success(body.data)
         } else {
-            Result.failure(ApiException(body?.message ?: "Login failed"))
+            val errorDetail = parseErrorBody(response.errorBody())
+            Result.failure(ApiException(errorDetail ?: body?.message ?: "登录失败"))
         }
     }
 

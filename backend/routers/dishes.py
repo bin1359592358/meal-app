@@ -19,25 +19,32 @@ def list_dishes(
     room_id: int,
     category_id: Optional[int] = Query(None, description="Filter by category"),
     q: Optional[str] = Query(None, description="Search dish name"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(100, ge=1, le=200, description="Items per page"),
     current_user: User = Depends(require_member),
     db: Session = Depends(get_db),
 ):
     """List non-deleted dishes in the room, optionally filtered or searched."""
-    query = (
+    base_query = (
         db.query(Dish)
         .filter(Dish.room_id == room_id, Dish.is_deleted == False)
     )
 
     if category_id is not None:
-        query = query.filter(Dish.category_id == category_id)
+        base_query = base_query.filter(Dish.category_id == category_id)
 
     if q:
-        query = query.filter(Dish.name.like(f"%{q}%"))
+        base_query = base_query.filter(Dish.name.like(f"%{q}%"))
 
-    dishes = query.order_by(Dish.sort_order).all()
+    base_query = base_query.order_by(Dish.sort_order)
+    total = base_query.count()
+    dishes = base_query.offset((page - 1) * page_size).limit(page_size).all()
 
     return ApiResponse(
-        data=[DishResponse.model_validate(d).model_dump() for d in dishes]
+        data=[DishResponse.model_validate(d).model_dump() for d in dishes],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 

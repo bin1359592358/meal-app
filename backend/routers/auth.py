@@ -23,6 +23,44 @@ from schemas import (
 
 router = APIRouter(prefix="/auth")
 
+# ── PIN lockout tracking (in-memory, per-process) ──────────────────────
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_SECONDS = 60
+_login_attempts: dict[str, int] = {}        # username -> consecutive failures
+_lockout_until: dict[str, float] = {}       # username -> lockout expiry (epoch)
+
+
+def _check_lockout(username: str) -> None:
+    """Raise 429 if the account is currently locked out."""
+    import time
+    expiry = _lockout_until.get(username, 0)
+    if time.time() < expiry:
+        remaining = int(expiry - time.time())
+        raise HTTPException(
+            status_code=429,
+            detail=f"登录尝试次数过多，请{remaining}秒后再试",
+        )
+    # Lockout expired — reset
+    if expiry > 0 and time.time() >= expiry:
+        _login_attempts.pop(username, None)
+        _lockout_until.pop(username, None)
+
+
+def _record_failure(username: str) -> None:
+    """Increment failed attempts; lock out if threshold reached."""
+    import time
+    count = _login_attempts.get(username, 0) + 1
+    _login_attempts[username] = count
+    if count >= MAX_FAILED_ATTEMPTS:
+        _lockout_until[username] = time.time() + LOCKOUT_SECONDS
+        _login_attempts[username] = 0  # reset counter for next cycle
+
+
+def _clear_failure(username: str) -> None:
+    """Reset failed-attempt counters on successful login."""
+    _login_attempts.pop(username, None)
+    _lockout_until.pop(username, None)
+
 
 @router.post("/register")
 def register(body: UserRegister, db: Session = Depends(get_db)):
@@ -69,9 +107,16 @@ def register(body: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(body: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return an auth token."""
+    _check_lockout(body.username)
+
     user = db.query(User).filter(User.username == body.username).first()
     if not user or not verify_pin(body.pin, user.pin_hash):
-        raise HTTPException(status_code=401, detail="用户名或PIN错误")
+        _record_failure(body.username)
+        attempts_left = MAX_FAILED_ATTEMPTS - _login_attempts.get(body.username, 0)
+        detail = f"用户名或PIN错误（剩余{attempts_left}次尝试）" if attempts_left > 0 else "登录尝试次数过多，请稍后再试"
+        raise HTTPException(status_code=401, detail=detail)
+
+    _clear_failure(body.username)
 
     # Generate token and create session
     token = generate_token()

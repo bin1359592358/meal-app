@@ -30,6 +30,8 @@ android/.idea/
 android/captures/
 android/.externalNativeBuild/
 android/app/release/
+android/keystore.properties
+android/app/app-release.keystore
 
 # IDE
 .idea/

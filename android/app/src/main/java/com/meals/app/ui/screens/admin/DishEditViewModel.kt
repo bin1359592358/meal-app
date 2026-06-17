@@ -10,7 +10,7 @@ import com.meals.app.data.dto.DishDto
 import com.meals.app.data.dto.DishUpdateRequest
 import com.meals.app.data.local.Preferences
 import com.meals.app.data.repository.MealRepository
-import com.meals.app.util.ImagePicker
+import com.meals.app.util.ImageUploadUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -216,7 +216,7 @@ class DishEditViewModel : ViewModel() {
     fun uploadImage(context: Context, uri: Uri) {
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true, error = null) }
-            ImagePicker.uploadImage(context, uri).fold(
+            ImageUploadUtil.uploadImage(context, uri).fold(
                 onSuccess = { url ->
                     _uiState.update { it.copy(imageUrl = url, isUploading = false) }
                 },

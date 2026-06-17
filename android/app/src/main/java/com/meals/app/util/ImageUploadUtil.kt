@@ -13,7 +13,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * Supports gallery selection via ActivityResultContracts.GetContent.
  * Uploads to the backend /api/upload/image endpoint.
  */
-object ImagePicker {
+object ImageUploadUtil {
 
     val supportedMimeTypes = listOf(
         "image/jpeg",

@@ -43,7 +43,7 @@ class Session(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    token = Column(String(64), unique=True, nullable=False, index=True)
+    token = Column(String(32), unique=True, nullable=False, index=True)
     created_at = Column(String(30), nullable=False, default=_iso_now)
     expires_at = Column(String(30), nullable=False)
 
@@ -78,7 +78,7 @@ class RoomMember(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    role = Column(String(10), nullable=False)  # "chef" or "member"
+    role = Column(String(10), nullable=False)  # "chef" or "guest"
     joined_at = Column(String(30), nullable=False, default=_iso_now)
 
     # Relationships

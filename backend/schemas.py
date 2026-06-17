@@ -295,3 +295,6 @@ class ApiResponse(BaseModel):
     code: int = 0
     data: Any = None
     message: str = "ok"
+    total: int | None = None
+    page: int | None = None
+    page_size: int | None = None
