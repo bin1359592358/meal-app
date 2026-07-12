@@ -11,8 +11,8 @@ const KEYS = {
   SERVER_URL: 'server_url',
 }
 
-// 默认服务器地址（与 Android 端保持一致，指向 Railway 云端）
-const DEFAULT_SERVER_URL = 'https://backend-production-a604b.up.railway.app'
+// 默认服务器地址（自定义域名，CNAME 指向 Railway）
+const DEFAULT_SERVER_URL = 'https://meal.xiaofengj.xyz'
 
 const storage = {
   // ─── Token ───
@@ -59,14 +59,13 @@ const storage = {
   // ─── 服务器地址 ───
   getServerUrl() {
     const stored = wx.getStorageSync(KEYS.SERVER_URL)
-    if (stored && !stored.includes('127.0.0.1') && !stored.includes('localhost')) {
-      return stored
+    if (!stored || stored.includes('127.0.0.1') || stored.includes('localhost') || stored.includes('railway.app')) {
+      if (stored && stored !== DEFAULT_SERVER_URL) {
+        this.setServerUrl(DEFAULT_SERVER_URL)
+      }
+      return DEFAULT_SERVER_URL
     }
-    // 迁移：如果存储的是本地地址或空，使用云端地址
-    if (stored && (stored.includes('127.0.0.1') || stored.includes('localhost'))) {
-      this.setServerUrl(DEFAULT_SERVER_URL)
-    }
-    return DEFAULT_SERVER_URL
+    return stored
   },
   setServerUrl(url) {
     wx.setStorageSync(KEYS.SERVER_URL, url)
