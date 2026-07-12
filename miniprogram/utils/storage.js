@@ -58,7 +58,15 @@ const storage = {
 
   // ─── 服务器地址 ───
   getServerUrl() {
-    return wx.getStorageSync(KEYS.SERVER_URL) || DEFAULT_SERVER_URL
+    const stored = wx.getStorageSync(KEYS.SERVER_URL)
+    if (stored && !stored.includes('127.0.0.1') && !stored.includes('localhost')) {
+      return stored
+    }
+    // 迁移：如果存储的是本地地址或空，使用云端地址
+    if (stored && (stored.includes('127.0.0.1') || stored.includes('localhost'))) {
+      this.setServerUrl(DEFAULT_SERVER_URL)
+    }
+    return DEFAULT_SERVER_URL
   },
   setServerUrl(url) {
     wx.setStorageSync(KEYS.SERVER_URL, url)
