@@ -116,7 +116,7 @@ def login(body: UserLogin, db: Session = Depends(get_db)):
     _check_lockout(body.username)
 
     user = db.query(User).filter(User.username == body.username).first()
-    if not user or not verify_pin(body.pin, user.pin_hash):
+    if not user or not user.pin_hash or not verify_pin(body.pin, user.pin_hash):
         _record_failure(body.username)
         if body.username in _lockout_until and _time.time() < _lockout_until[body.username]:
             detail = "登录尝试次数过多，请60秒后再试"

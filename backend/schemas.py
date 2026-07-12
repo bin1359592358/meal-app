@@ -70,9 +70,9 @@ class PinChange(BaseModel):
     old_pin: str
     new_pin: str
 
-    @field_validator("new_pin")
+    @field_validator("old_pin", "new_pin")
     @classmethod
-    def validate_new_pin(cls, v: str) -> str:
+    def validate_pin(cls, v: str) -> str:
         if not re.match(r"^\d{4,6}$", v):
             raise ValueError("PIN must be 4-6 digits.")
         return v

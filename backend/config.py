@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str = ""
 
     # App
+    ENVIRONMENT: str = "development"
+    AUTO_SEED: bool = False
     SECRET_KEY: str = "dev-secret"
     TOKEN_EXPIRE_DAYS: int = 30
 
@@ -26,8 +28,14 @@ class Settings(BaseSettings):
 
     @property
     def is_local_db(self) -> bool:
-        """Return True if using local SQLite (no Turso URL configured)."""
-        return not self.TURSO_DATABASE_URL
+        """最终生效的数据库 URL 使用 SQLite 时返回 True。"""
+        return self.database_scheme == "sqlite"
+
+    @property
+    def database_scheme(self) -> str:
+        """返回最终生效数据库 URL 对应的 SQLAlchemy 方言。"""
+        driver_name = self.database_url.split(":", 1)[0]
+        return driver_name.split("+", 1)[0].lower()
 
     @property
     def database_url(self) -> str:

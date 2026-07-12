@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from config import settings
 from database import Base, engine
 from models import (  # noqa: F401  – ensure all models are registered
     Category,
@@ -26,13 +27,14 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     # Run inline migrations for new columns
     _run_migrations(engine)
-    # Auto-seed if database is empty
-    try:
-        from seed_data import seed
-        seed()
-    except Exception as e:
-        import logging
-        logging.getLogger("seed").warning("Auto-seed skipped: %s", e)
+    # 演示数据必须显式开启，避免生产环境创建默认账号。
+    if settings.AUTO_SEED:
+        try:
+            from seed_data import seed
+            seed()
+        except Exception as e:
+            import logging
+            logging.getLogger("seed").warning("Auto-seed skipped: %s", e)
     yield
 
 
