@@ -65,11 +65,11 @@ def order_summary(
     current_user: User = Depends(require_member),
     db: Session = Depends(get_db),
 ):
-    """Aggregate order data grouped by dish name. Chef only."""
+    """返回进行中订单汇总及已完成营业统计。"""
     if not _is_chef(room_id, current_user.id, db):
         raise HTTPException(status_code=403, detail="Only the room chef can perform this action.")
 
-    orders = (
+    active_orders = (
         db.query(Order)
         .filter(
             Order.room_id == room_id,
@@ -78,36 +78,47 @@ def order_summary(
         .all()
     )
 
-    # Aggregate by dish_name
-    agg: dict[str, dict] = defaultdict(
-        lambda: {"total_quantity": 0, "order_ids": set(), "seasonings": []}
+    completed_orders = (
+        db.query(Order)
+        .filter(Order.room_id == room_id, Order.status == "completed")
+        .all()
     )
 
-    for order in orders:
-        for item in order.items:
-            entry = agg[item.dish_name]
-            entry["total_quantity"] += item.quantity
-            entry["order_ids"].add(order.id)
-            if item.seasoning_text:
-                entry["seasonings"].append(item.seasoning_text)
-
-    summary = [
-        OrderSummaryItem(
-            dish_name=name,
-            total_quantity=data["total_quantity"],
-            order_count=len(data["order_ids"]),
-            seasonings_list=data["seasonings"],
+    def aggregate(orders: list[Order]) -> list[OrderSummaryItem]:
+        """按菜品 ID 聚合，避免同名菜品互相合并。"""
+        agg: dict[tuple[int, str], dict] = defaultdict(
+        lambda: {"total_quantity": 0, "order_ids": set(), "seasonings": []}
         )
-        for name, data in agg.items()
-    ]
+        for order in orders:
+            for item in order.items:
+                key = (item.dish_id, item.dish_name)
+                entry = agg[key]
+                entry["total_quantity"] += item.quantity
+                entry["order_ids"].add(order.id)
+                if item.seasoning_text:
+                    entry["seasonings"].append(item.seasoning_text)
+        return [
+            OrderSummaryItem(
+                dish_id=dish_id,
+                dish_name=dish_name,
+                total_quantity=data["total_quantity"],
+                order_count=len(data["order_ids"]),
+                seasonings_list=data["seasonings"],
+            )
+            for (dish_id, dish_name), data in agg.items()
+        ]
 
-    total_price = sum(o.total_price for o in orders)
+    active_amount = round(sum(order.total_price for order in active_orders), 2)
+    revenue = round(sum(order.total_price for order in completed_orders), 2)
 
     return ApiResponse(
         data=OrderSummaryResponse(
-            summary=summary,
-            total_orders=len(orders),
-            total_price=round(total_price, 2),
+            summary=aggregate(active_orders),
+            total_orders=len(active_orders),
+            total_price=active_amount,
+            completed_orders=len(completed_orders),
+            revenue=revenue,
+            sales_summary=aggregate(completed_orders),
         ).model_dump()
     )
 

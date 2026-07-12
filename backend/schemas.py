@@ -215,7 +215,12 @@ class RoomRename(BaseModel):
 
 
 class RoomJoin(BaseModel):
-    code: str
+    code: str = Field(..., min_length=6, max_length=6)
+
+    @field_validator("code", mode="before")
+    @classmethod
+    def normalize_code(cls, value: Any) -> Any:
+        return value.strip().upper() if isinstance(value, str) else value
 
 
 class RoomResponse(BaseModel):
@@ -453,6 +458,7 @@ class OrderResponse(BaseModel):
 
 
 class OrderSummaryItem(BaseModel):
+    dish_id: int
     dish_name: str
     total_quantity: int
     order_count: int
@@ -463,6 +469,9 @@ class OrderSummaryResponse(BaseModel):
     summary: list[OrderSummaryItem]
     total_orders: int
     total_price: float
+    completed_orders: int = 0
+    revenue: float = 0.0
+    sales_summary: list[OrderSummaryItem] = Field(default_factory=list)
 
 
 class StatusUpdate(BaseModel):
