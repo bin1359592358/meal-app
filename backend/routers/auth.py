@@ -197,7 +197,7 @@ async def wechat_login(body: WechatLogin, db: Session = Depends(get_db)):
         user = User(
             username=auto_username,
             nickname=nickname,
-            pin_hash=None,
+            pin_hash="",  # empty string — satisfies old NOT NULL constraint; falsy so PIN-change guard still works
             openid=openid,
         )
         db.add(user)
