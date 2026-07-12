@@ -1,0 +1,58 @@
+<!-- pages/overview/overview.wxml -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+
+    <!-- 统计卡片 -->
+    <view class="stats-row">
+      <view class="stat-card">
+        <text class="stat-value">{{totalOrders}}</text>
+        <text class="stat-label">总订单数</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value stat-value--price">¥{{totalPrice}}</text>
+        <text class="stat-label">总收入</text>
+      </view>
+    </view>
+
+    <!-- 排序切换 -->
+    <view class="sort-bar">
+      <text class="sort-title">菜品统计</text>
+      <view class="sort-toggle" bindtap="onToggleSort">
+        <text>按{{sortBy === 'quantity' ? '数量' : '名称'}}</text>
+        <text class="sort-icon">⇅</text>
+      </view>
+    </view>
+
+    <!-- 菜品聚合列表 -->
+    <view wx:if="{{summary.length === 0}}" class="empty-section">
+      <empty-state icon="📊" text="暂无订单数据" />
+    </view>
+
+    <view wx:else class="summary-list">
+      <view class="summary-item" wx:for="{{summary}}" wx:key="dish_name">
+        <view class="summary-info">
+          <text class="summary-name">{{item.dish_name}}</text>
+          <view class="summary-meta">
+            <text class="meta-item">共 {{item.total_quantity}} 份</text>
+            <text class="meta-divider">|</text>
+            <text class="meta-item">{{item.order_count}} 单</text>
+          </view>
+        </view>
+        <view class="summary-bar">
+          <view
+            class="summary-bar-fill"
+            style="width: {{totalOrders > 0 ? (item.order_count / totalOrders * 100) : 0}}%"
+          ></view>
+        </view>
+      </view>
+    </view>
+
+  </block>
+</view>

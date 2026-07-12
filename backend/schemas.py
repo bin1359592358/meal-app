@@ -46,13 +46,19 @@ class UserLogin(BaseModel):
         return v
 
 
+class WechatLogin(BaseModel):
+    code: str = Field(..., min_length=1)
+    nickname: str | None = None
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    username: str
+    username: str | None = None
     nickname: str
     created_at: str
+    avatar_url: str | None = None
 
 
 class AuthResponse(BaseModel):
@@ -84,7 +90,7 @@ class MemberResponse(BaseModel):
 
     id: int
     user_id: int
-    username: str
+    username: str | None = None
     nickname: str
     role: str
     joined_at: str

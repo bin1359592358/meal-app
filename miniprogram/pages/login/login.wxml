@@ -1,0 +1,112 @@
+<!-- pages/login/login.wxml -->
+<view class="page">
+
+  <!-- 顶部 Logo / 标题区 -->
+  <view class="header">
+    <view class="logo-circle">
+      <text class="logo-text">点菜</text>
+    </view>
+    <text class="subtitle">和朋友一起，轻松点菜</text>
+  </view>
+
+  <!-- 微信登录失败回退：账号密码登录 -->
+  <view class="card fallback-card" wx:if="{{loginFailed}}">
+    <text class="fallback-notice">{{loginError}}</text>
+
+    <view class="fallback-form">
+      <input
+        class="input"
+        placeholder="用户名（字母+数字）"
+        value="{{fbUsername}}"
+        bindinput="onFbUsernameInput"
+      />
+      <input
+        wx:if="{{fbMode === 'register'}}"
+        class="input"
+        placeholder="昵称"
+        value="{{fbNickname}}"
+        bindinput="onFbNicknameInput"
+      />
+      <input
+        class="input"
+        placeholder="密码（4-6位数字）"
+        type="number"
+        value="{{fbPin}}"
+        bindinput="onFbPinInput"
+        maxlength="6"
+      />
+      <button
+        class="btn-primary"
+        bindtap="onFallbackLogin"
+        disabled="{{loading}}"
+      >
+        {{fbMode === 'login' ? '登录' : '注册'}}
+      </button>
+
+      <view class="fallback-actions">
+        <text class="switch-link" bindtap="onFbModeSwitch">
+          {{fbMode === 'login' ? '没有账号？去注册' : '已有账号？去登录'}}
+        </text>
+        <text class="switch-link" bindtap="onRetryWxLogin">重试微信登录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 模式切换 Tab -->
+  <view class="tabs" wx:if="{{!loginFailed || fbUsername}}">
+    <view
+      class="tab {{activeTab === 'create' ? 'tab--active' : ''}}"
+      bindtap="onTabTap"
+      data-tab="create"
+    >创建餐桌</view>
+    <view
+      class="tab {{activeTab === 'join' ? 'tab--active' : ''}}"
+      bindtap="onTabTap"
+      data-tab="join"
+    >加入餐桌</view>
+  </view>
+
+  <!-- 未登录提示 -->
+  <view class="card" wx:if="{{loginFailed && !fbUsername}}">
+    <text class="card-title">请先在上方登录</text>
+  </view>
+
+  <!-- 创建餐桌表单 -->
+  <view class="card" wx:if="{{activeTab === 'create'}}">
+    <text class="card-title">为你的餐桌起个名字</text>
+    <input
+      class="input"
+      placeholder="请输入餐桌名称"
+      value="{{roomName}}"
+      bindinput="onRoomNameInput"
+      maxlength="20"
+    />
+    <button
+      class="btn-primary"
+      bindtap="onCreateRoom"
+      disabled="{{!roomName || loading}}"
+    >
+      {{loading ? '创建中...' : '创建餐桌'}}
+    </button>
+  </view>
+
+  <!-- 加入餐桌表单 -->
+  <view class="card" wx:if="{{activeTab === 'join'}}">
+    <text class="card-title">输入邀请码加入餐桌</text>
+    <input
+      class="input"
+      placeholder="请输入邀请码"
+      value="{{inviteCode}}"
+      bindinput="onInviteCodeInput"
+      maxlength="10"
+    />
+    <button
+      class="btn-primary"
+      bindtap="onJoinRoom"
+      disabled="{{!inviteCode || loading}}"
+    >
+      {{loading ? '加入中...' : '加入餐桌'}}
+    </button>
+  </view>
+
+</view>

@@ -1,0 +1,22 @@
+<view class="order-card" bindtap="onTap">
+  <!-- 顶部：订单号 + 状态 -->
+  <view class="card-header">
+    <text class="order-id">#{{order.id}}</text>
+    <text class="status-badge" style="color: {{statusColor}}; background: {{statusColor}}15;">{{statusText}}</text>
+  </view>
+
+  <!-- 中间：菜品摘要 -->
+  <view class="card-body">
+    <text class="dish-summary">{{dishSummary}}</text>
+  </view>
+
+  <!-- 底部：时间 + 价格 + 人数 -->
+  <view class="card-footer">
+    <text class="order-time">{{relativeTime}}</text>
+    <view class="card-footer-right">
+      <text wx:if="{{showNickname && order.user_nickname}}" class="orderer-name">{{order.user_nickname}}</text>
+      <text wx:if="{{order.people_count > 1}}" class="people-count">{{order.people_count}}人</text>
+      <text class="total-price">{{totalPrice}}</text>
+    </view>
+  </view>
+</view>

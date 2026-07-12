@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
+import httpx
 
 from auth import generate_token, hash_pin, verify_pin
 from config import settings
@@ -20,6 +21,7 @@ from schemas import (
     UserLogin,
     UserRegister,
     UserResponse,
+    WechatLogin,
 )
 
 router = APIRouter(prefix="/auth")
@@ -149,6 +151,86 @@ def login(body: UserLogin, db: Session = Depends(get_db)):
     )
 
 
+@router.post("/wechat-login")
+async def wechat_login(body: WechatLogin, db: Session = Depends(get_db)):
+    """Authenticate via WeChat Mini Program code and return an auth token."""
+    if not settings.is_wechat_configured:
+        raise HTTPException(status_code=500, detail="微信登录未配置，请联系管理员")
+
+    # Exchange code for openid via WeChat API
+    wx_url = "https://api.weixin.qq.com/sns/jscode2session"
+    params = {
+        "appid": settings.WX_APPID,
+        "secret": settings.WX_SECRET,
+        "js_code": body.code,
+        "grant_type": "authorization_code",
+    }
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(wx_url, params=params)
+
+    wx_data = resp.json()
+
+    if "errcode" in wx_data and wx_data["errcode"] != 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"微信登录失败: {wx_data.get('errmsg', '未知错误')}",
+        )
+
+    openid = wx_data.get("openid")
+    if not openid:
+        raise HTTPException(status_code=400, detail="微信登录失败: 未获取到openid")
+
+    # Find or create user by openid
+    user = db.query(User).filter(User.openid == openid).first()
+
+    if not user:
+        # Auto-create user for new WeChat login
+        nickname = body.nickname or "微信用户"
+        auto_username = f"wx_{openid[:12]}"
+
+        user = User(
+            username=auto_username,
+            nickname=nickname,
+            pin_hash=None,
+            openid=openid,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        # Update nickname if provided
+        if body.nickname:
+            user.nickname = body.nickname
+            db.commit()
+
+    # Clean up expired sessions
+    now_iso = datetime.now(timezone.utc).isoformat()
+    db.query(SessionModel).filter(
+        SessionModel.user_id == user.id,
+        SessionModel.expires_at < now_iso,
+    ).delete(synchronize_session=False)
+
+    # Generate token and create session
+    token = generate_token()
+    session = SessionModel(
+        user_id=user.id,
+        token=token,
+        expires_at=(
+            datetime.now(timezone.utc) + timedelta(days=settings.TOKEN_EXPIRE_DAYS)
+        ).isoformat(),
+    )
+    db.add(session)
+    db.commit()
+
+    return ApiResponse(
+        data=AuthResponse(
+            user=UserResponse.model_validate(user),
+            token=token,
+        ).model_dump()
+    )
+
+
 @router.post("/pin/change")
 def change_pin(
     body: PinChange,
@@ -156,6 +238,9 @@ def change_pin(
     db: Session = Depends(get_db),
 ):
     """Change the authenticated user's PIN."""
+    if not current_user.pin_hash:
+        raise HTTPException(status_code=400, detail="微信登录用户无法修改PIN码")
+
     lockout_key = f"pin_change:{current_user.id}"
     _check_lockout(lockout_key)
 

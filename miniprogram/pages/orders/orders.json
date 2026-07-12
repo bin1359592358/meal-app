@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "order-card": "/components/order-card/order-card",
+    "empty-state": "/components/empty-state/empty-state"
+  },
+  "navigationBarTitleText": "我的订单",
+  "enablePullDownRefresh": true
+}

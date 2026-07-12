@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "点菜",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "dish-card": "/components/dish-card/dish-card",
+    "cart-bar": "/components/cart-bar/cart-bar",
+    "seasoning-panel": "/components/seasoning-panel/seasoning-panel",
+    "empty-state": "/components/empty-state/empty-state"
+  }
+}

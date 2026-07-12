@@ -1,0 +1,170 @@
+/* pages/login/login.wxss */
+
+.page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 48rpx 48rpx;
+  box-sizing: border-box;
+}
+
+/* ── Header / Logo ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 72rpx;
+}
+
+.logo-circle {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: #FF6B35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 53, 0.35);
+}
+
+.logo-text {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 4rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  width: 100%;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  margin-bottom: 48rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 30rpx;
+  color: #666;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.tab--active {
+  color: #FF6B35;
+  font-weight: 600;
+  background: rgba(255, 107, 53, 0.08);
+}
+
+.tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  height: 4rpx;
+  background: #FF6B35;
+  border-radius: 4rpx;
+}
+
+/* ── Card ── */
+.card {
+  width: 100%;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 48rpx 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 36rpx;
+}
+
+/* ── Input ── */
+.input {
+  width: 100%;
+  height: 96rpx;
+  background: #F5F5F5;
+  border-radius: 12rpx;
+  padding: 0 28rpx;
+  font-size: 30rpx;
+  color: #333;
+  box-sizing: border-box;
+  margin-bottom: 40rpx;
+  border: 2rpx solid transparent;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #FF6B35;
+  background: #fff;
+}
+
+/* ── Button ── */
+.btn-primary {
+  width: 100% !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #FF6B35 !important;
+  color: #fff !important;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 12rpx !important;
+  border: none !important;
+  letter-spacing: 4rpx;
+}
+
+.btn-primary[disabled] {
+  background: #ccc !important;
+  color: #fff !important;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+/* ── Fallback Login ── */
+.fallback-card {
+  border: 2rpx solid #FF9800;
+  margin-bottom: 32rpx;
+}
+
+.fallback-notice {
+  display: block;
+  font-size: 26rpx;
+  color: #FF9800;
+  margin-bottom: 28rpx;
+  line-height: 1.5;
+}
+
+.fallback-form .input {
+  margin-bottom: 24rpx;
+}
+
+.fallback-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24rpx;
+}
+
+.switch-link {
+  font-size: 26rpx;
+  color: #FF6B35;
+}

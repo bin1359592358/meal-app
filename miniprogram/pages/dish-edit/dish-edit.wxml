@@ -1,0 +1,127 @@
+<!-- pages/dish-edit/dish-edit.wxml -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <view class="form">
+
+      <!-- 菜品名称 -->
+      <view class="form-group">
+        <text class="form-label">菜品名称</text>
+        <input
+          class="form-input"
+          placeholder="菜品名称 *"
+          value="{{name}}"
+          bindinput="onNameInput"
+          maxlength="30"
+        />
+      </view>
+
+      <!-- 描述 -->
+      <view class="form-group">
+        <text class="form-label">描述</text>
+        <textarea
+          class="form-textarea"
+          placeholder="描述"
+          value="{{description}}"
+          bindinput="onDescInput"
+          maxlength="200"
+          auto-height
+        />
+      </view>
+
+      <!-- 价格 -->
+      <view class="form-group">
+        <text class="form-label">价格</text>
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="价格 *"
+          value="{{price}}"
+          bindinput="onPriceInput"
+        />
+      </view>
+
+      <!-- 分类 -->
+      <view class="form-group">
+        <text class="form-label">分类</text>
+        <picker
+          mode="selector"
+          range="{{categories}}"
+          range-key="name"
+          value="{{categoryIndex}}"
+          bindchange="onCategoryChange"
+        >
+          <view class="form-picker">
+            <text>{{categories.length > 0 ? categories[categoryIndex].name : '请选择分类'}}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 标签 -->
+      <view class="form-group">
+        <text class="form-label">标签</text>
+        <view class="tags-wrap">
+          <view class="tag-chip" wx:for="{{tags}}" wx:key="*this">
+            <text class="tag-text">{{item}}</text>
+            <text
+              class="tag-remove"
+              bindtap="onRemoveTag"
+              data-index="{{index}}"
+            >✕</text>
+          </view>
+        </view>
+        <view class="tag-add-row">
+          <input
+            class="form-input tag-input"
+            placeholder="输入标签"
+            value="{{tagInput}}"
+            bindinput="onTagInput"
+            maxlength="10"
+          />
+          <view class="tag-add-btn" bindtap="onAddTag">添加</view>
+        </view>
+      </view>
+
+      <!-- 图片上传 -->
+      <view class="form-group">
+        <text class="form-label">图片</text>
+        <view class="image-upload" bindtap="onChooseImage">
+          <image
+            wx:if="{{localImagePath || imageUrl}}"
+            class="preview-image"
+            src="{{localImagePath || imageUrl}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="upload-placeholder">
+            <text class="upload-icon">📷</text>
+            <text class="upload-text">点击上传图片</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 是否可点 -->
+      <view class="form-group form-group--row">
+        <text class="form-label">可点单</text>
+        <switch checked="{{isAvailable}}" bindchange="onAvailableChange" color="#FF6B35" />
+      </view>
+
+      <!-- 保存按钮 -->
+      <button class="save-btn" bindtap="onSave">保存</button>
+
+      <!-- 删除按钮（仅编辑模式） -->
+      <button
+        class="delete-btn"
+        wx:if="{{!isCreate}}"
+        bindtap="onDelete"
+      >删除菜品</button>
+
+    </view>
+  </block>
+</view>

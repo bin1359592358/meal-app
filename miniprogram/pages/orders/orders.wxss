@@ -1,0 +1,79 @@
+/* 订单列表页面样式 */
+
+/* ─── 总览入口 ─── */
+.overview-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #FF6B35, #FF8A5C);
+  color: #FFFFFF;
+  padding: 28rpx 24rpx;
+}
+
+.overview-entry:active {
+  opacity: 0.9;
+}
+
+.overview-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 6rpx;
+}
+
+.overview-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.overview-arrow {
+  font-size: 40rpx;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+}
+
+/* ─── 加载状态 ─── */
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #9E9E9E;
+}
+
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 24rpx;
+  color: #9E9E9E;
+}
+
+/* ─── 空状态 ─── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 32rpx;
+}
+
+.empty-text {
+  color: #9E9E9E;
+  font-size: 28rpx;
+  text-align: center;
+}

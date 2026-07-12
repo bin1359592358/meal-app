@@ -1,0 +1,252 @@
+/* pages/dish-edit/dish-edit.wxss */
+
+.page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  padding: 24rpx;
+  box-sizing: border-box;
+  padding-bottom: 80rpx;
+}
+
+/* ── Loading ── */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 6rpx solid #EEEEEE;
+  border-top-color: #FF6B35;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #9E9E9E;
+  font-size: 28rpx;
+  margin-top: 24rpx;
+}
+
+/* ── Form ── */
+.form {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.form-group {
+  margin-bottom: 32rpx;
+}
+
+.form-group--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  color: #757575;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.form-group--row .form-label {
+  margin-bottom: 0;
+  font-size: 30rpx;
+  color: #212121;
+}
+
+.form-input {
+  width: 100%;
+  height: 88rpx;
+  background: #F5F5F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  background: #F5F5F5;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.form-picker {
+  width: 100%;
+  height: 88rpx;
+  background: #F5F5F5;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-arrow {
+  font-size: 36rpx;
+  color: #CCCCCC;
+  font-weight: 300;
+}
+
+/* ── Tags ── */
+.tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.tag-chip {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 8rpx;
+}
+
+.tag-text {
+  font-size: 24rpx;
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+.tag-remove {
+  font-size: 22rpx;
+  color: #FF6B35;
+  margin-left: 12rpx;
+}
+
+.tag-remove:active {
+  opacity: 0.6;
+}
+
+.tag-add-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.tag-input {
+  flex: 1;
+}
+
+.tag-add-btn {
+  padding: 0 32rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #FF6B35;
+  color: #FFFFFF;
+  font-size: 26rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.tag-add-btn:active {
+  opacity: 0.8;
+}
+
+/* ── Image Upload ── */
+.image-upload {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #F5F5F5;
+}
+
+.image-upload:active {
+  opacity: 0.8;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #DDDDDD;
+  border-radius: 16rpx;
+  box-sizing: border-box;
+}
+
+.upload-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.upload-text {
+  font-size: 24rpx;
+  color: #9E9E9E;
+}
+
+/* ── Buttons ── */
+.save-btn {
+  width: 100% !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #FF6B35 !important;
+  color: #FFFFFF !important;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 16rpx !important;
+  border: none !important;
+  margin-top: 40rpx;
+}
+
+.save-btn::after {
+  border: none;
+}
+
+.save-btn:active {
+  opacity: 0.85;
+}
+
+.delete-btn {
+  width: 100% !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: #FFFFFF !important;
+  color: #E53935 !important;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 16rpx !important;
+  border: 2rpx solid #E53935 !important;
+  margin-top: 24rpx;
+}
+
+.delete-btn::after {
+  border: none;
+}
+
+.delete-btn:active {
+  opacity: 0.7;
+}

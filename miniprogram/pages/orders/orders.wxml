@@ -1,0 +1,43 @@
+<view class="container">
+  <!-- 厨师总览入口 -->
+  <view wx:if="{{isChef}}" class="overview-entry card" bindtap="onGoOverview">
+    <view class="overview-left">
+      <text class="overview-title">订单总览</text>
+      <text class="overview-desc">查看所有订单状态，管理出餐流程</text>
+    </view>
+    <text class="overview-arrow">›</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading && orders.length === 0}}" class="loading-wrap">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <empty-state
+    wx:elif="{{orders.length === 0 && !loading}}"
+    icon="📋"
+    text="还没有订单"
+    buttonText="去点菜"
+    bind:onAction="onGoToMenu"
+  />
+
+  <!-- 订单列表 -->
+  <block wx:else>
+    <order-card
+      wx:for="{{orders}}"
+      wx:key="id"
+      order="{{item}}"
+      showNickname="{{isChef}}"
+      bind:onTap="onOrderTap"
+    />
+
+    <!-- 底部加载状态 -->
+    <view wx:if="{{loading}}" class="loading-more">
+      <text>加载中...</text>
+    </view>
+    <view wx:elif="{{!hasMore && orders.length > 0}}" class="no-more">
+      <text>没有更多订单了</text>
+    </view>
+  </block>
+</view>

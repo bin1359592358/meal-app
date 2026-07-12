@@ -26,9 +26,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(20), unique=True, nullable=False, index=True)
+    username = Column(String(20), unique=True, nullable=True, index=True)
     nickname = Column(String(50), nullable=False)
-    pin_hash = Column(String(128), nullable=False)
+    pin_hash = Column(String(128), nullable=True)
+    openid = Column(String(64), unique=True, nullable=True, index=True)
+    avatar_url = Column(String(500), nullable=True)
     created_at = Column(String(30), nullable=False, default=_iso_now)
 
     # Relationships

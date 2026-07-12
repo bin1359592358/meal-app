@@ -1,0 +1,48 @@
+<view class="dish-card {{dish.is_available === false ? 'unavailable' : ''}}" bind:tap="onTap">
+  <!-- 图片 -->
+  <view class="dish-image-wrap">
+    <image
+      wx:if="{{dish.image_url}}"
+      class="dish-image"
+      src="{{dish.image_url}}"
+      mode="aspectFill"
+      lazy-load
+    />
+    <view wx:else class="dish-image-placeholder">
+      <text class="placeholder-emoji">🍽️</text>
+    </view>
+    <!-- 售罄遮罩 -->
+    <view wx:if="{{dish.is_available === false}}" class="sold-out-overlay">
+      <text class="sold-out-text">已售罄</text>
+    </view>
+  </view>
+
+  <!-- 信息区 -->
+  <view class="dish-info">
+    <text class="dish-name">{{dish.name}}</text>
+    <text class="dish-desc" wx:if="{{dish.description}}">{{dish.description}}</text>
+
+    <!-- 标签 -->
+    <view class="dish-tags" wx:if="{{dish.tags && dish.tags.length > 0}}">
+      <text class="dish-tag" wx:for="{{dish.tags}}" wx:key="*this">{{item}}</text>
+    </view>
+
+    <view class="dish-bottom">
+      <text class="dish-price">¥{{dish.price}}</text>
+
+      <!-- 数量控制 -->
+      <view class="qty-control" catch:tap="preventBubble" wx:if="{{dish.is_available !== false}}">
+        <view
+          class="qty-btn qty-minus {{quantity <= 0 ? 'hidden' : ''}}"
+          catch:tap="onMinus"
+        >
+          <text class="qty-btn-text">−</text>
+        </view>
+        <text class="qty-count {{quantity <= 0 ? 'hidden' : ''}}">{{quantity}}</text>
+        <view class="qty-btn qty-plus" catch:tap="onAdd">
+          <text class="qty-btn-text">+</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

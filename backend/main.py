@@ -22,8 +22,10 @@ from models import (  # noqa: F401  – ensure all models are registered
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: create tables and auto-seed on startup."""
+    """Application lifespan: create tables, run migrations, and auto-seed on startup."""
     Base.metadata.create_all(bind=engine)
+    # Run inline migrations for new columns
+    _run_migrations(engine)
     # Auto-seed if database is empty
     try:
         from seed_data import seed
@@ -32,6 +34,30 @@ async def lifespan(app: FastAPI):
         import logging
         logging.getLogger("seed").warning("Auto-seed skipped: %s", e)
     yield
+
+
+def _run_migrations(eng) -> None:
+    """Add missing columns to existing tables (SQLite/Turso compatible)."""
+    from sqlalchemy import text, inspect
+
+    inspector = inspect(eng)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing_cols = {c["name"] for c in inspector.get_columns("users")}
+    migrations = [
+        ("openid", "VARCHAR(64)"),
+        ("avatar_url", "VARCHAR(500)"),
+    ]
+    with eng.connect() as conn:
+        for col_name, col_type in migrations:
+            if col_name not in existing_cols:
+                conn.execute(
+                    text(f'ALTER TABLE users ADD COLUMN "{col_name}" {col_type}')
+                )
+                conn.commit()
+                import logging
+                logging.getLogger("migration").info("Added column users.%s", col_name)
 
 
 app = FastAPI(

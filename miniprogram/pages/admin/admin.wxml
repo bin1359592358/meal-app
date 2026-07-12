@@ -1,0 +1,157 @@
+<!-- pages/admin/admin.wxml -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <view class="admin-layout">
+
+      <!-- 左侧分类栏 -->
+      <scroll-view class="sidebar" scroll-y="true">
+        <view
+          class="cat-item {{selectedCatId === item.id ? 'cat-item--active' : ''}}"
+          wx:for="{{categories}}"
+          wx:key="id"
+          bindtap="onSelectCategory"
+          data-id="{{item.id}}"
+        >
+          <text class="cat-icon">{{item.icon || '📁'}}</text>
+          <view class="cat-info">
+            <text class="cat-name">{{item.name}}</text>
+            <text class="cat-count">{{item.dish_count || 0}}道</text>
+          </view>
+          <view
+            class="cat-action-btn edit-cat-btn"
+            catchtap="onEditCategory"
+            data-id="{{item.id}}"
+          >✎</view>
+          <view
+            class="cat-delete"
+            catchtap="onDeleteCategory"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+          >✕</view>
+        </view>
+
+        <!-- 新增分类按钮 -->
+        <view class="add-cat-btn" bindtap="onOpenCategoryDialog">
+          <text>+ 新增分类</text>
+        </view>
+      </scroll-view>
+
+      <!-- 右侧菜品列表 -->
+      <scroll-view class="main-area" scroll-y="true">
+        <view wx:if="{{!selectedCatId}}" class="empty-hint">
+          <text>请先选择或创建分类</text>
+        </view>
+
+        <block wx:elif="{{dishes.length === 0}}">
+          <empty-state icon="🍽️" text="该分类暂无菜品" />
+        </block>
+
+        <view wx:else class="dish-list">
+          <view class="dish-item" wx:for="{{dishes}}" wx:key="id">
+            <view class="dish-info">
+              <text class="dish-name">{{item.name}}</text>
+              <text class="dish-price">¥{{item.price}}</text>
+            </view>
+            <view class="dish-actions">
+              <switch
+                checked="{{item.is_available}}"
+                bindchange="onToggleDish"
+                data-id="{{item.id}}"
+                color="#FF6B35"
+              />
+              <view
+                class="action-btn edit-btn"
+                bindtap="onEditDish"
+                data-id="{{item.id}}"
+              >编辑</view>
+              <view
+                class="action-btn delete-btn"
+                bindtap="onDeleteDish"
+                data-id="{{item.id}}"
+                data-name="{{item.name}}"
+              >删除</view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+    </view>
+
+    <!-- 底部添加菜品按钮 -->
+    <view class="bottom-bar" wx:if="{{selectedCatId}}">
+      <button class="add-dish-btn" bindtap="onAddDish">+ 添加菜品</button>
+    </view>
+  </block>
+
+  <!-- 新增分类弹窗 -->
+  <view class="dialog-mask" wx:if="{{showCategoryDialog}}" catchtap="onCloseCategoryDialog" catchtouchmove="preventTouchMove">
+    <view class="dialog" catchtap="preventTouchMove">
+      <text class="dialog-title">新增分类</text>
+
+      <text class="dialog-label">分类名称</text>
+      <input
+        class="dialog-input"
+        placeholder="请输入分类名称"
+        value="{{newCatName}}"
+        bindinput="onCatNameInput"
+        maxlength="10"
+      />
+
+      <text class="dialog-label">选择图标</text>
+      <view class="emoji-grid">
+        <view
+          class="emoji-option {{newCatIcon === item ? 'emoji-option--selected' : ''}}"
+          wx:for="{{emojiOptions}}"
+          wx:key="*this"
+          bindtap="onSelectEmoji"
+          data-emoji="{{item}}"
+        >{{item}}</view>
+      </view>
+
+      <view class="dialog-actions">
+        <view class="dialog-btn dialog-btn--cancel" bindtap="onCloseCategoryDialog">取消</view>
+        <view class="dialog-btn dialog-btn--confirm" bindtap="onSubmitCategory">确定</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 编辑分类弹窗 -->
+  <view class="dialog-mask" wx:if="{{showEditCategoryDialog}}" catchtap="onCloseEditCategoryDialog" catchtouchmove="preventTouchMove">
+    <view class="dialog" catchtap="preventTouchMove">
+      <text class="dialog-title">编辑分类</text>
+
+      <text class="dialog-label">分类名称</text>
+      <input
+        class="dialog-input"
+        placeholder="请输入分类名称"
+        value="{{editCatName}}"
+        bindinput="onEditCatNameInput"
+        maxlength="10"
+      />
+
+      <text class="dialog-label">选择图标</text>
+      <view class="emoji-grid">
+        <view
+          class="emoji-option {{editCatIcon === item ? 'emoji-option--selected' : ''}}"
+          wx:for="{{emojiOptions}}"
+          wx:key="*this"
+          bindtap="onSelectEditEmoji"
+          data-emoji="{{item}}"
+        >{{item}}</view>
+      </view>
+
+      <view class="dialog-actions">
+        <view class="dialog-btn dialog-btn--cancel" bindtap="onCloseEditCategoryDialog">取消</view>
+        <view class="dialog-btn dialog-btn--confirm" bindtap="onSubmitEditCategory">确定</view>
+      </view>
+    </view>
+  </view>
+
+</view>

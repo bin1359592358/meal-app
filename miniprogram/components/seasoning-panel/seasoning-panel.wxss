@@ -1,0 +1,173 @@
+/* components/seasoning-panel/seasoning-panel.wxss */
+
+/* ─── 遮罩层 ─── */
+.panel-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.panel-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ─── 面板容器 ─── */
+.panel-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 201;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.panel-container.show {
+  transform: translateY(0);
+}
+
+/* ─── 头部 ─── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 20rpx;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+
+.panel-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.panel-close {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-icon {
+  font-size: 32rpx;
+  color: #999999;
+}
+
+/* ─── 内容区域 ─── */
+.panel-body {
+  flex: 1;
+  padding: 24rpx 32rpx;
+  max-height: 60vh;
+}
+
+.seasoning-group {
+  margin-bottom: 36rpx;
+}
+
+.group-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+/* ─── 选项列表（单选/多选） ─── */
+.option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.option-chip {
+  padding: 12rpx 28rpx;
+  border-radius: 32rpx;
+  background: #F5F5F5;
+  border: 2rpx solid transparent;
+  transition: all 0.2s ease;
+}
+
+.option-chip.active {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: #FF6B35;
+}
+
+.option-text {
+  font-size: 26rpx;
+  color: #666666;
+}
+
+.option-chip.active .option-text {
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* ─── 刻度/滑块 ─── */
+.scale-wrap {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 0;
+}
+
+.scale-slider {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.scale-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #FF6B35;
+  min-width: 48rpx;
+  text-align: center;
+}
+
+/* ─── 文本输入 ─── */
+.text-wrap {
+  padding: 4rpx 0;
+}
+
+.text-input {
+  background: #F5F5F5;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+/* ─── 底部按钮 ─── */
+.panel-footer {
+  padding: 20rpx 32rpx 24rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.confirm-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #FF6B35;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-btn-text {
+  font-size: 32rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}

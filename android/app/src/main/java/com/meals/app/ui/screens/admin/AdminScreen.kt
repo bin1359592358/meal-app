@@ -54,9 +54,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -64,9 +61,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.meals.app.data.dto.DishDto
 import com.meals.app.data.local.Preferences
+import com.meals.app.ui.navigation.Routes
 
 private val OrangePrimary = Color(0xFFFF6B35)
 private val PriceRed = Color(0xFFE53935)
@@ -166,17 +165,19 @@ fun AdminScreen(
         }
     }
 
-    // Refresh data when screen resumes (e.g., after returning from DishEditScreen)
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
+    // Refresh data when navigating back to this screen (e.g., after returning from DishEditScreen)
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            if (destination.route == Routes.ADMIN) {
                 viewModel.loadCategories()
-                uiState.selectedCategoryId?.let { viewModel.loadDishes(it) }
+                val selectedCat = viewModel.uiState.value.selectedCategoryId
+                if (selectedCat != null) {
+                    viewModel.loadDishes(selectedCat)
+                }
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
     }
 
     Scaffold(

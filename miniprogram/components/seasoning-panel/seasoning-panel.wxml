@@ -1,0 +1,88 @@
+<!-- 遮罩层 -->
+<view class="panel-mask {{visible ? 'show' : ''}}" bind:tap="onClose"></view>
+
+<!-- 面板主体 -->
+<view class="panel-container {{visible ? 'show' : ''}}" catch:tap="preventBubble">
+  <!-- 头部 -->
+  <view class="panel-header">
+    <text class="panel-title">{{dish.name}} - 口味选择</text>
+    <view class="panel-close" bind:tap="onClose">
+      <text class="close-icon">✕</text>
+    </view>
+  </view>
+
+  <!-- 调味选项列表 -->
+  <scroll-view class="panel-body" scroll-y>
+    <block wx:for="{{dish.seasonings}}" wx:key="name" wx:for-item="seasoning">
+
+      <view class="seasoning-group">
+        <text class="group-label">{{seasoning.name}}</text>
+
+        <!-- 单选类型 -->
+        <view class="option-list" wx:if="{{seasoning.type === 'single'}}">
+          <view
+            wx:for="{{seasoning.options}}"
+            wx:key="*this"
+            wx:for-item="opt"
+            class="option-chip {{selections[seasoning.name] === opt ? 'active' : ''}}"
+            data-name="{{seasoning.name}}"
+            data-option="{{opt}}"
+            bind:tap="onSingleSelect"
+          >
+            <text class="option-text">{{opt}}</text>
+          </view>
+        </view>
+
+        <!-- 多选类型 -->
+        <view class="option-list" wx:if="{{seasoning.type === 'multi'}}">
+          <view
+            wx:for="{{seasoning.options}}"
+            wx:key="*this"
+            wx:for-item="opt"
+            class="option-chip {{selections[seasoning.name] && selections[seasoning.name].indexOf(opt) !== -1 ? 'active' : ''}}"
+            data-name="{{seasoning.name}}"
+            data-option="{{opt}}"
+            bind:tap="onMultiToggle"
+          >
+            <text class="option-text">{{opt}}</text>
+          </view>
+        </view>
+
+        <!-- 刻度/滑块类型 -->
+        <view class="scale-wrap" wx:if="{{seasoning.type === 'scale'}}">
+          <slider
+            class="scale-slider"
+            min="{{seasoning.min || 0}}"
+            max="{{seasoning.max || 10}}"
+            value="{{selections[seasoning.name]}}"
+            activeColor="#FF6B35"
+            backgroundColor="#E0E0E0"
+            block-size="20"
+            data-name="{{seasoning.name}}"
+            bindchange="onScaleChange"
+          />
+          <text class="scale-value">{{selections[seasoning.name]}}</text>
+        </view>
+
+        <!-- 文本输入类型 -->
+        <view class="text-wrap" wx:if="{{seasoning.type === 'text'}}">
+          <input
+            class="text-input"
+            value="{{selections[seasoning.name]}}"
+            placeholder="{{seasoning.placeholder || '请输入...'}}"
+            data-name="{{seasoning.name}}"
+            bindinput="onTextInput"
+          />
+        </view>
+
+      </view>
+    </block>
+  </scroll-view>
+
+  <!-- 底部按钮 -->
+  <view class="panel-footer">
+    <view class="confirm-btn" bind:tap="onConfirm">
+      <text class="confirm-btn-text">加入购物车</text>
+    </view>
+  </view>
+</view>

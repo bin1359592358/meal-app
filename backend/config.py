@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-secret"
     TOKEN_EXPIRE_DAYS: int = 30
 
+    # WeChat Mini Program
+    WX_APPID: str = ""
+    WX_SECRET: str = ""
+
     @property
     def is_local_db(self) -> bool:
         """Return True if using local SQLite (no Turso URL configured)."""
@@ -43,6 +47,11 @@ class Settings(BaseSettings):
             and self.CLOUDINARY_API_KEY
             and self.CLOUDINARY_API_SECRET
         )
+
+    @property
+    def is_wechat_configured(self) -> bool:
+        """Return True if WeChat Mini Program credentials are set."""
+        return bool(self.WX_APPID and self.WX_SECRET)
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

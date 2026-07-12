@@ -1,0 +1,173 @@
+/* pages/overview/overview.wxss */
+
+.page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  padding: 24rpx;
+  box-sizing: border-box;
+  padding-bottom: 80rpx;
+}
+
+/* ── Loading ── */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 6rpx solid #EEEEEE;
+  border-top-color: #FF6B35;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #9E9E9E;
+  font-size: 28rpx;
+  margin-top: 24rpx;
+}
+
+/* ── Stats Row ── */
+.stats-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.stat-card {
+  flex: 1;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 36rpx 24rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.stat-value {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #FF6B35;
+  line-height: 1.2;
+  margin-bottom: 12rpx;
+}
+
+.stat-value--price {
+  color: #E53935;
+}
+
+.stat-label {
+  display: block;
+  font-size: 24rpx;
+  color: #9E9E9E;
+}
+
+/* ── Sort Bar ── */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+}
+
+.sort-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #212121;
+}
+
+.sort-toggle {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 8rpx;
+  color: #FF6B35;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.sort-toggle:active {
+  opacity: 0.7;
+}
+
+.sort-icon {
+  margin-left: 8rpx;
+  font-size: 24rpx;
+}
+
+/* ── Empty Section ── */
+.empty-section {
+  padding: 80rpx 0;
+}
+
+/* ── Summary List ── */
+.summary-list {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 16rpx 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.summary-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #F5F5F5;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.summary-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #212121;
+}
+
+.summary-meta {
+  display: flex;
+  align-items: center;
+}
+
+.meta-item {
+  font-size: 24rpx;
+  color: #757575;
+}
+
+.meta-divider {
+  font-size: 24rpx;
+  color: #DDDDDD;
+  margin: 0 12rpx;
+}
+
+.summary-bar {
+  height: 8rpx;
+  background: #F5F5F5;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.summary-bar-fill {
+  height: 100%;
+  background: #FF6B35;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+  min-width: 4rpx;
+}

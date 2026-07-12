@@ -1,0 +1,123 @@
+<!-- pages/profile/profile.wxml -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+
+    <!-- 用户信息卡片 -->
+    <view class="card user-card">
+      <view class="avatar">
+        <text class="avatar-icon">👤</text>
+      </view>
+      <view class="user-info">
+        <view class="nickname-row">
+          <text class="nickname">{{userInfo.nickname || '未设置昵称'}}</text>
+          <text class="edit-btn" bindtap="onEditNickname">✏️</text>
+        </view>
+        <view class="role-badge {{isChef ? 'role-chef' : 'role-guest'}}">
+          {{isChef ? '主厨' : '食客'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 当前餐桌卡片 -->
+    <view class="card room-card" wx:if="{{activeRoom}}">
+      <text class="section-label">当前餐桌</text>
+      <view class="room-name">{{roomDetail.name || activeRoom.name || ''}}</view>
+      <view class="invite-code-row">
+        <text class="invite-label">邀请码</text>
+        <text class="invite-code">{{roomDetail.code || activeRoom.code || ''}}</text>
+        <view class="copy-btn" bindtap="onCopyInviteCode">复制</view>
+      </view>
+      <button class="share-btn" open-type="share">
+        <text>邀请好友加入</text>
+      </button>
+      <!-- 食客退出餐桌按钮 -->
+      <view class="leave-btn" wx:if="{{!isChef}}" bindtap="onLeaveRoom">退出餐桌</view>
+    </view>
+
+    <!-- 多餐桌列表（RoomSwitch 模块） -->
+    <view class="card" wx:if="{{rooms.length > 1}}">
+      <text class="section-label">我的餐桌 ({{rooms.length}})</text>
+      <view class="room-list">
+        <view
+          class="room-list-item {{activeRoom && item.id === activeRoom.id ? 'room-list-item--active' : ''}}"
+          wx:for="{{rooms}}"
+          wx:key="id"
+          bindtap="onSwitchRoom"
+          data-id="{{item.id}}"
+        >
+          <view class="room-list-info">
+            <text class="room-list-name">{{item.name}}</text>
+            <view class="room-list-role {{item.chef_id === userInfo.id ? 'role-chef' : 'role-guest'}}">
+              {{item.chef_id === userInfo.id ? '主厨' : '食客'}}
+            </view>
+          </view>
+          <text class="room-list-code">{{item.code}}</text>
+          <text class="room-list-arrow" wx:if="{{activeRoom && item.id === activeRoom.id}}">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 成员列表 -->
+    <view class="card" wx:if="{{members.length > 0}}">
+      <text class="section-label">餐桌成员 ({{members.length}})</text>
+      <view class="member-list">
+        <view
+          class="member-item"
+          wx:for="{{members}}"
+          wx:key="id"
+        >
+          <view class="member-avatar">
+            <text class="avatar-icon-sm">👤</text>
+          </view>
+          <view class="member-info">
+            <text class="member-name">{{item.nickname}}</text>
+            <view class="role-badge-sm {{item.role === 'chef' ? 'role-chef' : 'role-guest'}}">
+              {{item.role === 'chef' ? '主厨' : '食客'}}
+            </view>
+          </view>
+          <view
+            class="remove-btn"
+            wx:if="{{isChef && item.role !== 'chef'}}"
+            bindtap="onRemoveMember"
+            data-member="{{item}}"
+          >移除</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 菜单管理入口（仅主厨可见） -->
+    <view class="card menu-entry" wx:if="{{isChef}}" bindtap="onGoAdmin">
+      <view class="flex-between">
+        <view class="menu-entry-left">
+          <text class="menu-entry-icon">🍽️</text>
+          <text class="menu-entry-text">菜单管理</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 订单总览入口（仅主厨可见） -->
+    <view class="card menu-entry" wx:if="{{isChef}}" bindtap="onGoOverview">
+      <view class="flex-between">
+        <view class="menu-entry-left">
+          <text class="menu-entry-icon">📊</text>
+          <text class="menu-entry-text">订单总览</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-section">
+      <button class="logout-btn" bindtap="onLogout">退出登录</button>
+    </view>
+
+  </block>
+</view>
