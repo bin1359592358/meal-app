@@ -3,12 +3,52 @@
 import os
 import uuid
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 
 from config import settings
 
 # Local upload directory
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+MAX_FILE_SIZE = 5 * 1024 * 1024
+IMAGE_TYPES = {
+    "jpeg": {"mime": "image/jpeg", "extensions": {".jpg", ".jpeg"}},
+    "png": {"mime": "image/png", "extensions": {".png"}},
+    "webp": {"mime": "image/webp", "extensions": {".webp"}},
+    "gif": {"mime": "image/gif", "extensions": {".gif"}},
+}
+
+
+def _detect_image_type(content: bytes) -> str | None:
+    """根据文件头识别允许的图片格式。"""
+    if content.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if content.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if len(content) >= 12 and content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+async def validate_image_file(file: UploadFile) -> str:
+    """校验图片大小、扩展名、MIME 和真实文件头，并复位文件指针。"""
+    content = await file.read(MAX_FILE_SIZE + 1)
+    try:
+        if not content:
+            raise HTTPException(status_code=400, detail="图片不能为空文件")
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="文件大小超过限制（最大 5 MB）")
+        image_type = _detect_image_type(content)
+        if image_type is None:
+            raise HTTPException(status_code=400, detail="文件内容不是支持的图片格式")
+        expected = IMAGE_TYPES[image_type]
+        extension = os.path.splitext(file.filename or "")[1].lower()
+        if extension not in expected["extensions"] or file.content_type != expected["mime"]:
+            raise HTTPException(status_code=400, detail="图片扩展名、MIME 与文件内容不一致")
+        return image_type
+    finally:
+        await file.seek(0)
 
 
 def _ensure_upload_dir() -> None:

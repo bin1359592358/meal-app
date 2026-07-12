@@ -95,6 +95,7 @@ def create_dish(
         tags=body.tags_json(),
         seasonings=body.seasonings_json(),
         sort_order=body.sort_order,
+        is_available=body.is_available,
     )
     db.add(dish)
     db.commit()

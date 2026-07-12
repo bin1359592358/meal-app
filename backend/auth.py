@@ -1,8 +1,12 @@
 """Authentication and utility helpers."""
 
 import secrets
+import math
 
 import bcrypt
+from fastapi import HTTPException
+
+from schemas import _step_aligned
 
 
 def hash_pin(pin: str) -> str:
@@ -77,3 +81,85 @@ def serialize_seasonings(seasonings_data, user_selections: dict) -> str:
                 parts.append(value)
 
     return "\uff0c".join(parts)  # Chinese comma separator
+
+
+def _seasoning_definition_map(seasonings_data) -> tuple[list[str], dict]:
+    """兼容列表及旧版名称映射对象，并保留定义顺序。"""
+    if isinstance(seasonings_data, dict):
+        definitions = [
+            {"name": name, **config}
+            for name, config in seasonings_data.items()
+            if isinstance(config, dict)
+        ]
+    elif isinstance(seasonings_data, list):
+        definitions = seasonings_data
+    else:
+        definitions = []
+    order = []
+    definition_map = {}
+    for definition in definitions:
+        if isinstance(definition, dict) and isinstance(definition.get("name"), str):
+            name = definition["name"]
+            order.append(name)
+            definition_map[name] = definition
+    return order, definition_map
+
+
+def validate_and_serialize_seasonings(seasonings_data, user_selections: dict | None) -> str:
+    """验证用户调味选择，并生成可读文本；非法选择统一返回 400。"""
+    if not user_selections:
+        return ""
+    if not isinstance(user_selections, dict):
+        raise HTTPException(status_code=400, detail="调味选择必须是对象")
+
+    order, definitions = _seasoning_definition_map(seasonings_data)
+    unknown = [name for name in user_selections if name not in definitions]
+    if unknown:
+        raise HTTPException(status_code=400, detail=f"未知调味项：{unknown[0]}")
+
+    parts: list[str] = []
+    for name in order:
+        if name not in user_selections:
+            continue
+        definition = definitions[name]
+        value = user_selections[name]
+        seasoning_type = definition.get("type")
+
+        if seasoning_type == "single":
+            if not isinstance(value, str) or value not in definition.get("options", []):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值不在可选项中")
+            parts.append(value)
+        elif seasoning_type == "multi":
+            if not isinstance(value, list):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值必须是列表")
+            if len(value) > 20:
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的选择数量超过限制")
+            unique_values = []
+            for option in value:
+                if not isinstance(option, str) or option not in definition.get("options", []):
+                    raise HTTPException(status_code=400, detail=f"调味项 {name} 包含无效可选项")
+                if option not in unique_values:
+                    unique_values.append(option)
+            if unique_values:
+                parts.append("".join(unique_values))
+        elif seasoning_type == "scale":
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值必须是数字")
+            minimum = definition.get("min", 0)
+            maximum = definition.get("max", 5)
+            step = definition.get("step", 1)
+            if not minimum <= value <= maximum:
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值超出范围")
+            if not _step_aligned(value, minimum, step):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值不符合步长")
+            parts.append(f"{name}{value}")
+        elif seasoning_type == "text":
+            if not isinstance(value, str):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的值必须是字符串")
+            if len(value) > definition.get("max_length", 100):
+                raise HTTPException(status_code=400, detail=f"调味项 {name} 的文本超过长度限制")
+            if value:
+                parts.append(value)
+        else:
+            raise HTTPException(status_code=400, detail=f"调味项 {name} 的定义类型无效")
+    return "，".join(parts)

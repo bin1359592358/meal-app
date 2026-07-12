@@ -6,7 +6,7 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from auth import serialize_seasonings
+from auth import validate_and_serialize_seasonings
 from database import get_db
 from middleware import require_member
 from models import Dish, Order, OrderItem, Room, User
@@ -244,7 +244,9 @@ def create_order(
                 seasoning_defs = json.loads(dish.seasonings or "{}")
             except (json.JSONDecodeError, TypeError):
                 seasoning_defs = {}
-            seasoning_text = serialize_seasonings(seasoning_defs, item.seasonings)
+            seasoning_text = validate_and_serialize_seasonings(
+                seasoning_defs, item.seasonings
+            )
 
         subtotal = dish.price * item.quantity
         total_price += subtotal

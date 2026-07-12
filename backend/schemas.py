@@ -3,10 +3,120 @@
 from __future__ import annotations
 
 import json
+import math
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+SORT_ORDER_MIN = -1_000_000
+SORT_ORDER_MAX = 1_000_000
+MAX_DISH_PRICE = 100_000
+
+
+def _trimmed(value: Any) -> Any:
+    """去除字符串首尾空白，其他类型原样返回。"""
+    return value.strip() if isinstance(value, str) else value
+
+
+def _step_aligned(value: float, minimum: float, step: float) -> bool:
+    """使用十进制定点运算判断数值是否落在步长网格上。"""
+    try:
+        quotient = (Decimal(str(value)) - Decimal(str(minimum))) / Decimal(str(step))
+    except (InvalidOperation, ZeroDivisionError):
+        return False
+    return quotient == quotient.to_integral_value()
+
+
+def normalize_seasoning_definitions(value: Any) -> list[dict[str, Any]]:
+    """严格校验调味定义，并统一转换为列表格式。"""
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        value = [
+            {"name": name, **config}
+            for name, config in value.items()
+            if isinstance(config, dict)
+        ]
+    if not isinstance(value, list):
+        raise ValueError("调味定义必须是列表或对象")
+    if len(value) > 10:
+        raise ValueError("调味项最多 10 项")
+
+    normalized: list[dict[str, Any]] = []
+    names: set[str] = set()
+    for raw in value:
+        if not isinstance(raw, dict):
+            raise ValueError("每个调味项必须是对象")
+        name = _trimmed(raw.get("name"))
+        if not isinstance(name, str) or not 1 <= len(name) <= 20:
+            raise ValueError("调味项名称长度必须为 1-20 个字符")
+        if name in names:
+            raise ValueError(f"调味项名称重复：{name}")
+        names.add(name)
+
+        seasoning_type = raw.get("type")
+        if seasoning_type not in {"single", "multi", "scale", "text"}:
+            raise ValueError(f"调味项 {name} 的类型无效")
+        item: dict[str, Any] = {"name": name, "type": seasoning_type}
+
+        if seasoning_type in {"single", "multi"}:
+            options = raw.get("options")
+            if not isinstance(options, list) or not 1 <= len(options) <= 20:
+                raise ValueError(f"调味项 {name} 的选项数量必须为 1-20 个")
+            clean_options: list[str] = []
+            for option in options:
+                option = _trimmed(option)
+                if not isinstance(option, str) or not 1 <= len(option) <= 30:
+                    raise ValueError(f"调味项 {name} 的选项长度必须为 1-30 个字符")
+                if option in clean_options:
+                    raise ValueError(f"调味项 {name} 存在重复选项")
+                clean_options.append(option)
+            item["options"] = clean_options
+            if "default" in raw and raw["default"] is not None:
+                default = raw["default"]
+                if seasoning_type == "single":
+                    default = _trimmed(default)
+                    if default not in clean_options:
+                        raise ValueError(f"调味项 {name} 的默认值不在可选项中")
+                else:
+                    if not isinstance(default, list):
+                        raise ValueError(f"调味项 {name} 的默认值必须是列表")
+                    if len(default) != len(set(default)) or any(option not in clean_options for option in default):
+                        raise ValueError(f"调味项 {name} 的默认值包含重复或无效选项")
+                item["default"] = default
+        elif seasoning_type == "scale":
+            minimum = raw.get("min", 0)
+            maximum = raw.get("max", 5)
+            step = raw.get("step", 1)
+            if any(isinstance(number, bool) or not isinstance(number, (int, float)) for number in (minimum, maximum, step)):
+                raise ValueError(f"调味项 {name} 的范围和步长必须是数字")
+            if not all(math.isfinite(float(number)) for number in (minimum, maximum, step)):
+                raise ValueError(f"调味项 {name} 的范围和步长必须是有限数字")
+            if minimum >= maximum or step <= 0 or step > maximum - minimum:
+                raise ValueError(f"调味项 {name} 的范围或步长无效")
+            item.update({"min": minimum, "max": maximum, "step": step})
+            if "default" in raw and raw["default"] is not None:
+                default = raw["default"]
+                if isinstance(default, bool) or not isinstance(default, (int, float)):
+                    raise ValueError(f"调味项 {name} 的默认值必须是数字")
+                if not minimum <= default <= maximum or not _step_aligned(default, minimum, step):
+                    raise ValueError(f"调味项 {name} 的默认值超出范围或不符合步长")
+                item["default"] = default
+        else:
+            max_length = raw.get("max_length", 100)
+            if isinstance(max_length, bool) or not isinstance(max_length, int) or not 1 <= max_length <= 200:
+                raise ValueError(f"调味项 {name} 的文本长度限制必须为 1-200")
+            item["max_length"] = max_length
+            if "default" in raw and raw["default"] is not None:
+                default = raw["default"]
+                if not isinstance(default, str) or len(default) > max_length:
+                    raise ValueError(f"调味项 {name} 的默认文本超过长度限制")
+                item["default"] = default
+        normalized.append(item)
+    return normalized
 
 
 # ──────────────────────────── Auth / User ────────────────────────────
@@ -124,15 +234,25 @@ class RoomResponse(BaseModel):
 
 
 class CategoryCreate(BaseModel):
-    name: str
-    icon: str = ""
-    sort_order: int = 0
+    name: str = Field(..., min_length=1, max_length=30)
+    icon: str = Field(default="", max_length=10)
+    sort_order: int = Field(default=0, ge=SORT_ORDER_MIN, le=SORT_ORDER_MAX)
+
+    @field_validator("name", "icon", mode="before")
+    @classmethod
+    def trim_strings(cls, value: Any) -> Any:
+        return _trimmed(value)
 
 
 class CategoryUpdate(BaseModel):
-    name: str | None = None
-    icon: str | None = None
-    sort_order: int | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=30)
+    icon: str | None = Field(default=None, max_length=10)
+    sort_order: int | None = Field(default=None, ge=SORT_ORDER_MIN, le=SORT_ORDER_MAX)
+
+    @field_validator("name", "icon", mode="before")
+    @classmethod
+    def trim_strings(cls, value: Any) -> Any:
+        return _trimmed(value)
 
 
 class CategoryResponse(BaseModel):
@@ -151,13 +271,37 @@ class CategoryResponse(BaseModel):
 
 class DishCreate(BaseModel):
     category_id: int
-    name: str
-    description: str = ""
-    price: float = Field(..., gt=0)
-    image_url: str | None = None
-    tags: list[str] = []
-    seasonings: list | None = None
-    sort_order: int = 0
+    name: str = Field(..., min_length=1, max_length=50)
+    description: str = Field(default="", max_length=200)
+    price: float = Field(..., gt=0, le=MAX_DISH_PRICE)
+    image_url: str | None = Field(default=None, max_length=500)
+    tags: list[str] = Field(default_factory=list, max_length=10)
+    seasonings: list[dict[str, Any]] = Field(default_factory=list)
+    sort_order: int = Field(default=0, ge=SORT_ORDER_MIN, le=SORT_ORDER_MAX)
+    is_available: bool = True
+
+    @field_validator("name", "description", "image_url", mode="before")
+    @classmethod
+    def trim_strings(cls, value: Any) -> Any:
+        return _trimmed(value)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def validate_tags(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            return value
+        result = []
+        for tag in value:
+            tag = _trimmed(tag)
+            if not isinstance(tag, str) or not 1 <= len(tag) <= 20:
+                raise ValueError("每个标签长度必须为 1-20 个字符")
+            result.append(tag)
+        return result
+
+    @field_validator("seasonings", mode="before")
+    @classmethod
+    def validate_seasonings(cls, value: Any) -> list[dict[str, Any]]:
+        return normalize_seasoning_definitions(value)
 
     def tags_json(self) -> str:
         """Serialize tags list to JSON string for database storage."""
@@ -170,13 +314,37 @@ class DishCreate(BaseModel):
 
 class DishUpdate(BaseModel):
     category_id: int | None = None
-    name: str | None = None
-    description: str | None = None
-    price: float | None = Field(None, gt=0)
-    image_url: str | None = None
-    tags: list[str] | None = None
-    seasonings: list | None = None
-    sort_order: int | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=50)
+    description: str | None = Field(default=None, max_length=200)
+    price: float | None = Field(None, gt=0, le=MAX_DISH_PRICE)
+    image_url: str | None = Field(default=None, max_length=500)
+    tags: list[str] | None = Field(default=None, max_length=10)
+    seasonings: list[dict[str, Any]] | None = None
+    sort_order: int | None = Field(default=None, ge=SORT_ORDER_MIN, le=SORT_ORDER_MAX)
+    is_available: bool | None = None
+
+    @field_validator("name", "description", "image_url", mode="before")
+    @classmethod
+    def trim_strings(cls, value: Any) -> Any:
+        return _trimmed(value)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def validate_tags(cls, value: Any) -> Any:
+        if value is None or not isinstance(value, list):
+            return value
+        result = []
+        for tag in value:
+            tag = _trimmed(tag)
+            if not isinstance(tag, str) or not 1 <= len(tag) <= 20:
+                raise ValueError("每个标签长度必须为 1-20 个字符")
+            result.append(tag)
+        return result
+
+    @field_validator("seasonings", mode="before")
+    @classmethod
+    def validate_seasonings(cls, value: Any) -> list[dict[str, Any]] | None:
+        return None if value is None else normalize_seasoning_definitions(value)
 
 
 class DishResponse(BaseModel):
