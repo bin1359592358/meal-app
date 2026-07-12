@@ -46,8 +46,7 @@ def api_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     try:
         main = importlib.import_module("main")
         database = importlib.import_module("database")
-        # 当前 lifespan 会无条件执行 seed，测试因此不进入 lifespan；这里手工建表，
-        # AUTO_SEED=false 同时为生产代码支持该开关后保留明确的测试环境契约。
+        # 测试手工建表以保持夹具隔离；AUTO_SEED=false 确保不创建演示数据。
         database.Base.metadata.create_all(bind=database.engine)
         client = TestClient(main.app)
         yield client

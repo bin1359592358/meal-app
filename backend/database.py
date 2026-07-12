@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from config import settings
 
 engine_options = {"echo": False}
-if settings.database_scheme == "sqlite":
+if settings.database_drivername in {"sqlite", "sqlite+pysqlite"}:
     engine_options["connect_args"] = {"check_same_thread": False}
-elif settings.database_scheme == "libsql":
+elif settings.database_drivername == "sqlite+libsql":
     engine_options["connect_args"] = {"auth_token": settings.TURSO_AUTH_TOKEN}
 
 engine = create_engine(settings.database_url, **engine_options)

@@ -20,7 +20,7 @@ class UserRegister(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
-        if not re.match(r"^[a-zA-Z0-9]{3,20}$", v):
+        if not re.fullmatch(r"[a-zA-Z0-9]{3,20}", v):
             raise ValueError(
                 "Username must be 3-20 characters, alphanumeric only."
             )
@@ -29,7 +29,7 @@ class UserRegister(BaseModel):
     @field_validator("pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
-        if not re.match(r"^\d{4,6}$", v):
+        if not re.fullmatch(r"[0-9]{4,6}", v):
             raise ValueError("PIN must be 4-6 digits.")
         return v
 
@@ -41,7 +41,7 @@ class UserLogin(BaseModel):
     @field_validator("pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
-        if not re.match(r"^\d{4,6}$", v):
+        if not re.fullmatch(r"[0-9]{4,6}", v):
             raise ValueError("PIN must be 4-6 digits.")
         return v
 
@@ -73,7 +73,7 @@ class PinChange(BaseModel):
     @field_validator("old_pin", "new_pin")
     @classmethod
     def validate_pin(cls, v: str) -> str:
-        if not re.match(r"^\d{4,6}$", v):
+        if not re.fullmatch(r"[0-9]{4,6}", v):
             raise ValueError("PIN must be 4-6 digits.")
         return v
 

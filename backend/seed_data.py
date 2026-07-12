@@ -189,10 +189,9 @@ def seed() -> None:
 
         print()
         print("-" * 55)
-        print("  Chef Login Credentials (for API testing)")
+        print("  Demo Account")
         print("-" * 55)
         print(f"  Username:  chef001")
-        print(f"  PIN:       1234")
         print("  Session:   created")
         print(f"  Room Code: DEMO01")
         print("-" * 55)

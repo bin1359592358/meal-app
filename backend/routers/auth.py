@@ -72,7 +72,7 @@ def _clear_failure(username: str) -> None:
 def register(body: UserRegister, db: Session = Depends(get_db)):
     """Register a new user and return an auth token."""
     # Validate username format (defense in depth; schema validator also checks)
-    if not re.match(r"^[a-zA-Z0-9]{3,20}$", body.username):
+    if not re.fullmatch(r"[a-zA-Z0-9]{3,20}", body.username):
         raise HTTPException(status_code=400, detail="用户名格式错误，仅允许3-20位字母和数字")
 
     # Check username uniqueness
