@@ -1,11 +1,11 @@
 # Nixpacks build configuration
-# Tell Nixpacks to build the Python backend from the backend/ directory
+# Build the Python backend from the root directory (since railway up uploads everything)
 
 [phases.setup]
-nixPkgs = ["python311", "gcc"]
+nixPkgs = ["python311", "python311Packages.pip", "gcc"]
 
 [phases.install]
-cmds = ["pip install --no-cache-dir -r backend/requirements.txt"]
+cmds = ["python -m pip install --no-cache-dir -r backend/requirements.txt"]
 
 [phases.build]
 cmds = ["echo 'Build complete'"]
