@@ -1,12 +1,15 @@
 """Authentication routes: register, login, and PIN management."""
 
+import asyncio
+import json
 import re
 import time as _time
+import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
-import httpx
 
 from auth import generate_token, hash_pin, verify_pin
 from config import settings
@@ -165,11 +168,13 @@ async def wechat_login(body: WechatLogin, db: Session = Depends(get_db)):
         "js_code": body.code,
         "grant_type": "authorization_code",
     }
+    url = f"{wx_url}?{urllib.parse.urlencode(params)}"
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(wx_url, params=params)
+    def _fetch_wx():
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            return json.loads(resp.read().decode())
 
-    wx_data = resp.json()
+    wx_data = await asyncio.to_thread(_fetch_wx)
 
     if "errcode" in wx_data and wx_data["errcode"] != 0:
         raise HTTPException(

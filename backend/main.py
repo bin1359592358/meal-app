@@ -38,26 +38,30 @@ async def lifespan(app: FastAPI):
 
 def _run_migrations(eng) -> None:
     """Add missing columns to existing tables (SQLite/Turso compatible)."""
-    from sqlalchemy import text, inspect
+    try:
+        from sqlalchemy import text, inspect
 
-    inspector = inspect(eng)
-    if "users" not in inspector.get_table_names():
-        return
+        inspector = inspect(eng)
+        if "users" not in inspector.get_table_names():
+            return
 
-    existing_cols = {c["name"] for c in inspector.get_columns("users")}
-    migrations = [
-        ("openid", "VARCHAR(64)"),
-        ("avatar_url", "VARCHAR(500)"),
-    ]
-    with eng.connect() as conn:
-        for col_name, col_type in migrations:
-            if col_name not in existing_cols:
-                conn.execute(
-                    text(f'ALTER TABLE users ADD COLUMN "{col_name}" {col_type}')
-                )
-                conn.commit()
-                import logging
-                logging.getLogger("migration").info("Added column users.%s", col_name)
+        existing_cols = {c["name"] for c in inspector.get_columns("users")}
+        migrations = [
+            ("openid", "VARCHAR(64)"),
+            ("avatar_url", "VARCHAR(500)"),
+        ]
+        with eng.connect() as conn:
+            for col_name, col_type in migrations:
+                if col_name not in existing_cols:
+                    conn.execute(
+                        text(f'ALTER TABLE users ADD COLUMN "{col_name}" {col_type}')
+                    )
+                    conn.commit()
+                    import logging
+                    logging.getLogger("migration").info("Added column users.%s", col_name)
+    except Exception as e:
+        import logging
+        logging.getLogger("migration").warning("Migration skipped: %s", e)
 
 
 app = FastAPI(
