@@ -1,0 +1,14 @@
+# Nixpacks build configuration
+# Tell Nixpacks to build the Python backend from the backend/ directory
+
+[phases.setup]
+nixPkgs = ["python311", "gcc"]
+
+[phases.install]
+cmds = ["pip install --no-cache-dir -r backend/requirements.txt"]
+
+[phases.build]
+cmds = ["echo 'Build complete'"]
+
+[start]
+cmd = "cd backend && gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
