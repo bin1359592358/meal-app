@@ -11,8 +11,8 @@ const KEYS = {
   SERVER_URL: 'server_url',
 }
 
-// 默认服务器地址（自定义域名，CNAME 指向 Railway）
-const DEFAULT_SERVER_URL = 'https://meal.xiaofengj.xyz'
+// 默认服务器地址（Railway 云端，Trial 计划暂不支持自定义域名）
+const DEFAULT_SERVER_URL = 'https://backend-production-a604b.up.railway.app'
 
 const storage = {
   // ─── Token ───
@@ -59,7 +59,7 @@ const storage = {
   // ─── 服务器地址 ───
   getServerUrl() {
     const stored = wx.getStorageSync(KEYS.SERVER_URL)
-    if (!stored || stored.includes('127.0.0.1') || stored.includes('localhost') || stored.includes('railway.app')) {
+    if (!stored || stored.includes('127.0.0.1') || stored.includes('localhost') || stored.includes('xiaofengj')) {
       if (stored && stored !== DEFAULT_SERVER_URL) {
         this.setServerUrl(DEFAULT_SERVER_URL)
       }
