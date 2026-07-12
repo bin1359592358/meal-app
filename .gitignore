@@ -1,4 +1,4 @@
-# Python
+# Python 产物
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,43 +9,36 @@ venv/
 dist/
 build/
 
-# Database (local dev only)
+# 本地开发数据库
 backend/meal_app.db
+*.db.bak
+*.db.old
 
-# Environment
+# 环境变量
 .env
 !.env.example
 
-# Uploads (local dev only)
+# 本地上传文件
 backend/uploads/*
 !backend/uploads/.gitkeep
 
-# Android
-android/.gradle/
-android/app/build/
-android/build/
-android/local.properties
-android/.idea/
-*.iml
-android/captures/
-android/.externalNativeBuild/
-android/app/release/
-android/keystore.properties
-android/app/app-release.keystore
+# 密钥
+*.jks
+*.keystore
+keystore.properties
 
-# IDE
+# 开发工具
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS
+# 操作系统文件
 .DS_Store
 Thumbs.db
 
-# Misc
+# 其他临时文件
 *.log
 screenshots/
-*.png
-!docs/*.png
 ui.xml
+.superpowers/
