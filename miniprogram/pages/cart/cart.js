@@ -5,6 +5,7 @@
 const api = require('../../utils/api')
 const storage = require('../../utils/storage')
 const app = getApp()
+const { toSummary } = require('../../utils/seasoning')
 
 Page({
   data: {
@@ -30,7 +31,7 @@ Page({
   _syncCartData() {
     const cartItems = (app.globalData.cart.items || []).map(item => ({
       ...item,
-      seasoningText: this.getSeasoningText(item.seasonings),
+      seasoningText: toSummary(item.seasonings),
     }))
     const totalPrice = app.getCartTotal()
     const dishCount = app.getCartCount()
@@ -43,27 +44,13 @@ Page({
   },
 
   /**
-   * 构建调味摘要文本
-   */
-  getSeasoningText(seasonings) {
-    if (!seasonings || Object.keys(seasonings).length === 0) return ''
-    const parts = []
-    for (const key in seasonings) {
-      const val = seasonings[key]
-      if (val && val !== 'default') {
-        parts.push(val)
-      }
-    }
-    return parts.join(', ')
-  },
-
-  /**
    * 增加数量
    */
   onIncrease(e) {
-    const idx = e.currentTarget.dataset.index
-    const item = this.data.items[idx]
-    app.updateCartItemQty(idx, item.quantity + 1)
+    const key = e.currentTarget.dataset.key
+    const item = this.data.items.find(entry => entry.key === key)
+    if (!item) return
+    app.updateCartItemQty(key, item.quantity + 1)
     this._syncCartData()
   },
 
@@ -71,21 +58,22 @@ Page({
    * 减少数量
    */
   onDecrease(e) {
-    const idx = e.currentTarget.dataset.index
-    const item = this.data.items[idx]
+    const key = e.currentTarget.dataset.key
+    const item = this.data.items.find(entry => entry.key === key)
+    if (!item) return
     if (item.quantity <= 1) {
       wx.showModal({
         title: '提示',
         content: '确定删除该菜品吗？',
         success: (res) => {
           if (res.confirm) {
-            app.removeFromCart(idx)
+            app.removeFromCart(key)
             this._syncCartData()
           }
         },
       })
     } else {
-      app.updateCartItemQty(idx, item.quantity - 1)
+      app.updateCartItemQty(key, item.quantity - 1)
       this._syncCartData()
     }
   },
@@ -94,13 +82,13 @@ Page({
    * 删除菜品
    */
   onDelete(e) {
-    const idx = e.currentTarget.dataset.index
+    const key = e.currentTarget.dataset.key
     wx.showModal({
       title: '提示',
       content: '确定删除该菜品吗？',
       success: (res) => {
         if (res.confirm) {
-          app.removeFromCart(idx)
+          app.removeFromCart(key)
           this._syncCartData()
         }
       },

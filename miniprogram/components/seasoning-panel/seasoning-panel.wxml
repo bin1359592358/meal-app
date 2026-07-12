@@ -10,6 +10,13 @@
       <text class="close-icon">✕</text>
     </view>
   </view>
+  <view class="dish-detail">
+    <image wx:if="{{dish.image_url}}" class="detail-image" src="{{dish.image_url}}" mode="aspectFill" />
+    <view class="detail-copy">
+      <text class="detail-price">¥{{dish.price}}</text>
+      <text class="detail-description">{{dish.description || '主厨还没有填写介绍'}}</text>
+    </view>
+  </view>
 
   <!-- 调味选项列表 -->
   <scroll-view class="panel-body" scroll-y>
@@ -81,8 +88,8 @@
 
   <!-- 底部按钮 -->
   <view class="panel-footer">
-    <view class="confirm-btn" bind:tap="onConfirm">
-      <text class="confirm-btn-text">加入购物车</text>
+    <view class="confirm-btn {{dish.is_available === false ? 'disabled' : ''}}" bind:tap="onConfirm">
+      <text class="confirm-btn-text">{{dish.is_available === false ? '暂时售罄' : '加入购物车'}}</text>
     </view>
   </view>
 </view>

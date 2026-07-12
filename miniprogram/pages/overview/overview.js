@@ -14,6 +14,9 @@ Page({
     totalOrders: 0,
     totalPrice: 0,
     summary: [],
+    completedOrders: 0,
+    revenue: 0,
+    salesSummary: [],
     sortBy: 'quantity', // 'quantity' | 'name'
   },
 
@@ -45,6 +48,9 @@ Page({
       this.setData({
         totalOrders: res.total_orders || 0,
         totalPrice: res.total_price || 0,
+        completedOrders: res.completed_orders || 0,
+        revenue: res.revenue !== undefined ? res.revenue : (res.total_price || 0),
+        salesSummary: this.sortSummary(res.sales_summary || res.summary || [], this.data.sortBy),
         summary: this.sortSummary(summary, this.data.sortBy),
       })
     } catch (err) {
@@ -73,6 +79,7 @@ Page({
     this.setData({
       sortBy: newSort,
       summary: this.sortSummary(this.data.summary, newSort),
+      salesSummary: this.sortSummary(this.data.salesSummary, newSort),
     })
   },
 })

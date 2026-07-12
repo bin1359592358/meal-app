@@ -17,13 +17,13 @@ Component({
   methods: {
     /** 点击卡片 */
     onTap() {
-      if (!this.data.dish.is_available) return
+      if (this.data.dish.is_available === false) return
       this.triggerEvent('onTap', { dish: this.data.dish })
     },
 
     /** 点击加号 */
     onAdd(e) {
-      if (!this.data.dish.is_available) return
+      if (this.data.dish.is_available === false) return
       this.triggerEvent('onAdd', { dish: this.data.dish })
     },
 

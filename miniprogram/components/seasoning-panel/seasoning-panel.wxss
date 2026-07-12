@@ -156,6 +156,13 @@
   border-top: 1rpx solid #F0F0F0;
 }
 
+.dish-detail { display: flex; gap: 20rpx; padding: 0 32rpx 20rpx; }
+.detail-image { width: 144rpx; height: 112rpx; border-radius: 16rpx; flex: none; }
+.detail-copy { display: flex; flex-direction: column; gap: 10rpx; }
+.detail-price { color: #FF6B35; font-size: 34rpx; font-weight: 700; }
+.detail-description { color: #777; font-size: 26rpx; line-height: 1.5; }
+.confirm-btn.disabled { background: #BDBDBD; }
+
 .confirm-btn {
   width: 100%;
   height: 88rpx;

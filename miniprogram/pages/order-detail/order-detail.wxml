@@ -28,7 +28,7 @@
       >
         <view class="dish-item-left">
           <text class="dish-name">{{item.dish_name || item.dish.name}}</text>
-          <text class="dish-seasoning" wx:if="{{item.seasonings}}">{{item.seasoningText || ''}}</text>
+          <text class="dish-seasoning" wx:if="{{item.seasoningText}}">{{item.seasoningText}}</text>
         </view>
         <view class="dish-item-right">
           <text class="dish-qty">×{{item.quantity}}</text>

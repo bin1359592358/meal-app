@@ -55,9 +55,7 @@ Page({
    */
   _checkRole() {
     const room = storage.getActiveRoom()
-    if (room && room.role === 'chef') {
-      this.setData({ isChef: true })
-    }
+    this.setData({ isChef: !!(room && room.role === 'chef') })
   },
 
   /**
@@ -77,6 +75,7 @@ Page({
    * 加载订单列表
    */
   async _loadOrders() {
+    if (this._loadingOrders) return
     const room = storage.getActiveRoom()
     if (!room || !room.id) {
       this.setData({ loading: false })
@@ -86,6 +85,7 @@ Page({
 
     if (!this.data.hasMore) return
 
+    this._loadingOrders = true
     this.setData({ loading: true })
 
     try {
@@ -95,7 +95,9 @@ Page({
       )
 
       const list = Array.isArray(result) ? result : (result.items || result.orders || [])
-      const orders = this.data.orders.concat(list)
+      const byId = new Map(this.data.orders.map(order => [String(order.id), order]))
+      list.forEach(order => byId.set(String(order.id), order))
+      const orders = Array.from(byId.values())
 
       this.setData({
         orders,
@@ -107,6 +109,8 @@ Page({
     } catch (err) {
       console.error('加载订单失败:', err)
       this.setData({ loading: false })
+    } finally {
+      this._loadingOrders = false
     }
   },
 

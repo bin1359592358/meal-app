@@ -6,6 +6,24 @@
  */
 
 const storage = require('./storage')
+let redirectingToLogin = false
+
+function handleUnauthorized() {
+  storage.clearAuth()
+  try {
+    const app = getApp()
+    if (app && app.clearCart) app.clearCart()
+  } catch (e) {}
+  if (!redirectingToLogin) {
+    redirectingToLogin = true
+    wx.reLaunch({
+      url: '/pages/login/login',
+      complete() {
+        setTimeout(() => { redirectingToLogin = false }, 500)
+      },
+    })
+  }
+}
 
 /**
  * 发送 HTTP 请求
@@ -53,8 +71,7 @@ function request(path, options = {}) {
 
         // HTTP 状态码检查
         if (res.statusCode === 401) {
-          storage.clearAuth()
-          wx.reLaunch({ url: '/pages/login/login' })
+          handleUnauthorized()
           reject(new Error('登录已过期，请重新登录'))
           return
         }
@@ -142,9 +159,18 @@ const api = {
         },
         success(res) {
           wx.hideLoading()
+          if (res.statusCode === 401) {
+            handleUnauthorized()
+            reject(new Error('登录已过期，请重新登录'))
+            return
+          }
           if (res.statusCode === 200) {
-            const data = JSON.parse(res.data)
-            resolve(data.data || data)
+            try {
+              const data = JSON.parse(res.data)
+              resolve(data.data || data)
+            } catch (err) {
+              reject(new Error('上传响应格式错误'))
+            }
           } else {
             wx.showToast({ title: '上传失败', icon: 'none' })
             reject(new Error('上传失败'))

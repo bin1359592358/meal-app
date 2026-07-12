@@ -21,6 +21,9 @@
     <view class="admin-icon" wx:if="{{isChef}}" bind:tap="onAdminTap">
       <text class="admin-emoji">⚙️</text>
     </view>
+    <view class="admin-icon" bind:tap="onRandomDish">
+      <text class="admin-emoji">🎲</text>
+    </view>
   </view>
 
   <!-- ─── 主体：左侧分类 + 右侧菜品 ─── -->

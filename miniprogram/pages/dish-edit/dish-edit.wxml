@@ -112,6 +112,29 @@
         <switch checked="{{isAvailable}}" bindchange="onAvailableChange" color="#FF6B35" />
       </view>
 
+      <view class="form-group">
+        <view class="seasoning-title-row">
+          <text class="form-label">调味配置</text>
+          <view class="tag-add-btn" bindtap="onAddSeasoning">新增</view>
+        </view>
+        <view class="seasoning-editor" wx:for="{{seasonings}}" wx:key="index">
+          <view class="seasoning-title-row">
+            <input class="form-input seasoning-name" placeholder="调味名称，如辣度" value="{{item.name}}" data-index="{{index}}" data-field="name" bindinput="onSeasoningInput" />
+            <text class="tag-remove" data-index="{{index}}" bindtap="onRemoveSeasoning">删除</text>
+          </view>
+          <picker mode="selector" range="{{seasoningTypeNames}}" value="{{item.typeIndex}}" data-index="{{index}}" bindchange="onSeasoningTypeChange">
+            <view class="form-picker">类型：{{seasoningTypeNames[item.typeIndex]}} <text>›</text></view>
+          </picker>
+          <input wx:if="{{item.type === 'single' || item.type === 'multi'}}" class="form-input" placeholder="选项用逗号或顿号分隔" value="{{item.optionsText}}" data-index="{{index}}" data-field="optionsText" bindinput="onSeasoningInput" />
+          <view wx:if="{{item.type === 'scale'}}" class="seasoning-range">
+            <input class="form-input" type="digit" placeholder="最小" value="{{item.min}}" data-index="{{index}}" data-field="min" bindinput="onSeasoningInput" />
+            <input class="form-input" type="digit" placeholder="最大" value="{{item.max}}" data-index="{{index}}" data-field="max" bindinput="onSeasoningInput" />
+            <input class="form-input" type="digit" placeholder="步长" value="{{item.step}}" data-index="{{index}}" data-field="step" bindinput="onSeasoningInput" />
+          </view>
+          <input wx:if="{{item.type === 'text'}}" class="form-input" type="number" placeholder="最多输入字数（默认 100）" value="{{item.max_length}}" data-index="{{index}}" data-field="max_length" bindinput="onSeasoningInput" />
+        </view>
+      </view>
+
       <!-- 保存按钮 -->
       <button class="save-btn" bindtap="onSave">保存</button>
 

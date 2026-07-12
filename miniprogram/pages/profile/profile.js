@@ -6,6 +6,7 @@
 const api = require('../../utils/api')
 const storage = require('../../utils/storage')
 const { logout } = require('../../utils/auth')
+const session = require('../../utils/session')
 const app = getApp()
 
 Page({
@@ -76,26 +77,24 @@ Page({
   async onSwitchRoom(e) {
     const roomId = e.currentTarget.dataset.id
     const rooms = this.data.rooms
-    const target = rooms.find(r => r.id === roomId)
+    const target = rooms.find(r => String(r.id) === String(roomId))
     if (!target) return
 
-    const userInfo = this.data.userInfo
-    const role = target.chef_id === (userInfo && userInfo.id) ? 'chef' : 'guest'
-
-    storage.setActiveRoom({
-      id: target.id,
-      name: target.name,
-      code: target.code,
-      role,
+    if (String(target.id) === String(this.data.activeRoom && this.data.activeRoom.id)) return
+    const switchRoom = async () => {
+      const activeRoom = session.toActiveRoom(target, this.data.userInfo && this.data.userInfo.id)
+      app.clearCart()
+      storage.setActiveRoom(activeRoom)
+      this.setData({ activeRoom, isChef: activeRoom.role === 'chef' })
+      await this.loadRoomDetail()
+      wx.showToast({ title: '已切换餐桌', icon: 'success' })
+    }
+    if (!app.getCartCount()) return switchRoom()
+    wx.showModal({
+      title: '切换餐桌',
+      content: '切换后会清空当前购物车，是否继续？',
+      success: res => { if (res.confirm) switchRoom() },
     })
-
-    this.setData({
-      activeRoom: storage.getActiveRoom(),
-      isChef: role === 'chef',
-    })
-
-    await this.loadRoomDetail()
-    wx.showToast({ title: '已切换餐桌', icon: 'success' })
   },
 
   /**
@@ -114,8 +113,16 @@ Page({
         try {
           await api.delete(`/api/rooms/${activeRoom.id}/leave`)
           storage.removeActiveRoom()
+          app.clearCart()
           this.setData({ activeRoom: null, roomDetail: null, members: [] })
           await this.loadRooms()
+          const next = this.data.rooms[0]
+          if (next) {
+            const nextRoom = session.toActiveRoom(next, this.data.userInfo && this.data.userInfo.id)
+            storage.setActiveRoom(nextRoom)
+            this.setData({ activeRoom: nextRoom, isChef: nextRoom.role === 'chef' })
+            await this.loadRoomDetail()
+          }
           wx.showToast({ title: '已退出餐桌', icon: 'success' })
           // 如果没有餐桌了，跳转到登录页
           if (this.data.rooms.length === 0) {
@@ -210,7 +217,7 @@ Page({
       success: async (res) => {
         if (!res.confirm) return
         try {
-          await api.delete(`/api/rooms/${activeRoom.id}/members/${member.id}`)
+          await api.delete(`/api/rooms/${activeRoom.id}/members/${member.user_id}`)
           wx.showToast({ title: '已移除', icon: 'success' })
           await this.loadRoomDetail()
         } catch (err) {
@@ -232,6 +239,38 @@ Page({
    */
   onGoOverview() {
     wx.navigateTo({ url: '/pages/overview/overview' })
+  },
+
+  /** 关闭当前餐桌（主厨操作） */
+  onCloseRoom() {
+    const room = this.data.activeRoom
+    if (!room) return
+    wx.showModal({
+      title: '关闭餐桌',
+      content: '关闭后将不能继续点菜，确定关闭吗？',
+      confirmColor: '#E53935',
+      success: async res => {
+        if (!res.confirm) return
+        try {
+          await api.patch(`/api/rooms/${room.id}/close`)
+          app.clearCart()
+          storage.removeActiveRoom()
+          this.setData({ activeRoom: null, roomDetail: null, members: [], isChef: false })
+          await this.loadRooms()
+          const next = this.data.rooms[0]
+          if (next) {
+            const nextRoom = session.toActiveRoom(next, this.data.userInfo && this.data.userInfo.id)
+            storage.setActiveRoom(nextRoom)
+            this.setData({ activeRoom: nextRoom, isChef: nextRoom.role === 'chef' })
+            await this.loadRoomDetail()
+          }
+          wx.showToast({ title: '餐桌已关闭', icon: 'success' })
+          if (!this.data.rooms.length) wx.reLaunch({ url: '/pages/login/login' })
+        } catch (err) {
+          console.error('关闭餐桌失败:', err)
+        }
+      },
+    })
   },
 
   /**

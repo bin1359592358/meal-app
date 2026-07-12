@@ -16,17 +16,17 @@
           <text class="dish-name">{{item.dish.name}}</text>
           <text class="seasoning-text" wx:if="{{item.seasonings}}">{{item.seasoningText || ''}}</text>
         </view>
-        <view class="delete-btn" bindtap="onDelete" data-index="{{index}}">
+        <view class="delete-btn" bindtap="onDelete" data-key="{{item.key}}">
           <text class="delete-icon">×</text>
         </view>
       </view>
       <view class="item-footer">
         <view class="qty-control">
-          <view class="qty-btn minus" bindtap="onDecrease" data-index="{{index}}">
+          <view class="qty-btn minus" bindtap="onDecrease" data-key="{{item.key}}">
             <text>-</text>
           </view>
           <text class="qty-num">{{item.quantity}}</text>
-          <view class="qty-btn plus" bindtap="onIncrease" data-index="{{index}}">
+          <view class="qty-btn plus" bindtap="onIncrease" data-key="{{item.key}}">
             <text>+</text>
           </view>
         </view>

@@ -2,7 +2,10 @@
  * seasoning-panel 调味选择面板组件
  * 底部弹出面板，支持 single/multi/scale/text 四种调味类型
  */
+const { getDefaults } = require('../../utils/seasoning')
+
 Component({
+  externalClasses: [],
   properties: {
     dish: {
       type: Object,
@@ -27,19 +30,7 @@ Component({
   methods: {
     /** 初始化默认选择 */
     _initSelections() {
-      const selections = {}
-      const seasonings = this.data.dish.seasonings || []
-      seasonings.forEach(s => {
-        if (s.type === 'single') {
-          selections[s.name] = s.default || s.options[0] || ''
-        } else if (s.type === 'multi') {
-          selections[s.name] = Array.isArray(s.default) ? [...s.default] : []
-        } else if (s.type === 'scale') {
-          selections[s.name] = s.default !== undefined ? s.default : (s.min || 0)
-        } else if (s.type === 'text') {
-          selections[s.name] = s.default || ''
-        }
-      })
+      const selections = getDefaults(this.data.dish.seasonings || [])
       this.setData({ selections })
     },
 
@@ -91,6 +82,7 @@ Component({
 
     /** 确认加入购物车 */
     onConfirm() {
+      if (this.data.dish.is_available === false) return
       this.triggerEvent('onConfirm', {
         dish: this.data.dish,
         seasonings: { ...this.data.selections },

@@ -26,6 +26,9 @@ Page({
     imageUrl: '',
     localImagePath: '',
     isAvailable: true,
+    seasonings: [],
+    seasoningTypes: ['single', 'multi', 'scale', 'text'],
+    seasoningTypeNames: ['单选', '多选', '滑块', '文字'],
   },
 
   onLoad(options) {
@@ -96,6 +99,11 @@ Page({
         tags: dish.tags || [],
         imageUrl: dish.image_url || '',
         isAvailable: dish.is_available !== false,
+        seasonings: (dish.seasonings || []).map(item => ({
+          ...item,
+          typeIndex: ['single', 'multi', 'scale', 'text'].indexOf(item.type),
+          optionsText: (item.options || []).join('、'),
+        })),
         loading: false,
       })
     } catch (err) {
@@ -182,6 +190,51 @@ Page({
     this.setData({ isAvailable: e.detail.value })
   },
 
+  onAddSeasoning() {
+    if (this.data.seasonings.length >= 10) return
+    this.setData({
+      seasonings: [...this.data.seasonings, { name: '', type: 'single', typeIndex: 0, optionsText: '默认、少量、多量' }],
+    })
+  },
+
+  onRemoveSeasoning(e) {
+    const seasonings = [...this.data.seasonings]
+    seasonings.splice(Number(e.currentTarget.dataset.index), 1)
+    this.setData({ seasonings })
+  },
+
+  onSeasoningInput(e) {
+    const { index, field } = e.currentTarget.dataset
+    this.setData({ [`seasonings[${index}].${field}`]: e.detail.value })
+  },
+
+  onSeasoningTypeChange(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    const type = this.data.seasoningTypes[Number(e.detail.value)]
+    const item = { ...this.data.seasonings[index], type, typeIndex: Number(e.detail.value) }
+    if ((type === 'single' || type === 'multi') && !item.optionsText) item.optionsText = '默认、少量、多量'
+    if (type === 'scale') Object.assign(item, { min: 0, max: 5, step: 1 })
+    const seasonings = [...this.data.seasonings]
+    seasonings[index] = item
+    this.setData({ seasonings })
+  },
+
+  buildSeasonings() {
+    return this.data.seasonings.map(item => {
+      const result = { name: String(item.name || '').trim(), type: item.type }
+      if (item.type === 'single' || item.type === 'multi') {
+        result.options = String(item.optionsText || '').split(/[、,，]/).map(value => value.trim()).filter(Boolean)
+      } else if (item.type === 'scale') {
+        result.min = Number(item.min)
+        result.max = Number(item.max)
+        result.step = Number(item.step) || 1
+      } else {
+        result.max_length = Number(item.max_length) || 100
+      }
+      return result
+    })
+  },
+
   /**
    * 获取分类选中索引（用于 picker 显示）
    */
@@ -210,6 +263,17 @@ Page({
       wx.showToast({ title: '请选择分类', icon: 'none' })
       return
     }
+    if (this.data.seasonings.some(item => !String(item.name || '').trim())) {
+      wx.showToast({ title: '请填写调味项名称', icon: 'none' })
+      return
+    }
+    if (this.data.seasonings.some(item =>
+      (item.type === 'single' || item.type === 'multi') &&
+      !String(item.optionsText || '').split(/[、,，]/).some(value => value.trim())
+    )) {
+      wx.showToast({ title: '请填写调味选项', icon: 'none' })
+      return
+    }
 
     const body = {
       category_id: categoryId,
@@ -219,6 +283,7 @@ Page({
       image_url: imageUrl,
       tags,
       is_available: isAvailable,
+      seasonings: this.buildSeasonings(),
     }
 
     try {

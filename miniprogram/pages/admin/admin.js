@@ -163,7 +163,7 @@ Page({
 
     wx.showModal({
       title: '确认删除',
-      content: `确定删除分类「${catName}」及其所有菜品吗？`,
+      content: `确定删除分类「${catName}」吗？分类下有菜品时需先移动或删除菜品。`,
       confirmColor: '#E53935',
       success: async (res) => {
         if (!res.confirm) return

@@ -39,6 +39,7 @@
       </button>
       <!-- 食客退出餐桌按钮 -->
       <view class="leave-btn" wx:if="{{!isChef}}" bindtap="onLeaveRoom">退出餐桌</view>
+      <view class="leave-btn" wx:if="{{isChef}}" bindtap="onCloseRoom">关闭餐桌</view>
     </view>
 
     <!-- 多餐桌列表（RoomSwitch 模块） -->

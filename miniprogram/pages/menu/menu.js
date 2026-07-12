@@ -8,6 +8,7 @@ const app = getApp()
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+let searchRequestId = 0
 
 Page({
   data: {
@@ -37,14 +38,22 @@ Page({
     loading: false,
     /** 菜品数量映射（dishId -> quantity） */
     qtyMap: {},
+    loadedRoomId: null,
   },
 
   onLoad(options) {
     this._checkRole()
-    this._initData()
   },
 
   onShow() {
+    const room = storage.getActiveRoom()
+    const roomId = room && room.id
+    if (String(roomId || '') !== String(this.data.loadedRoomId || '')) {
+      this.setData({ searchKeyword: '', isSearchMode: false, searchResults: [], dishes: [], categories: [] })
+      this._checkRole()
+      this._initData()
+      return
+    }
     this._refreshCart()
   },
 
@@ -78,6 +87,8 @@ Page({
       if (this.data.categories.length > 0) {
         await this._loadDishes(0)
       }
+      const room = storage.getActiveRoom()
+      this.setData({ loadedRoomId: room && room.id })
     } catch (err) {
       console.error('初始化菜单失败:', err)
       wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' })
@@ -155,6 +166,7 @@ Page({
     if (searchTimer) clearTimeout(searchTimer)
 
     if (!keyword.trim()) {
+      searchRequestId++
       this.setData({ isSearchMode: false, searchResults: [] })
       return
     }
@@ -165,6 +177,7 @@ Page({
   },
 
   onSearchClear() {
+    searchRequestId++
     this.setData({ searchKeyword: '', isSearchMode: false, searchResults: [] })
   },
 
@@ -172,8 +185,10 @@ Page({
     const room = storage.getActiveRoom()
     if (!room) return
 
+    const requestId = ++searchRequestId
     try {
       const data = await api.get(`/api/rooms/${room.id}/dishes?q=${encodeURIComponent(keyword)}`)
+      if (requestId !== searchRequestId || keyword !== this.data.searchKeyword.trim()) return
       const results = Array.isArray(data) ? data : (data.items || data.list || [])
       this.setData({ isSearchMode: true, searchResults: results })
       this._buildQtyMap()
@@ -187,6 +202,10 @@ Page({
   /** 添加菜品到购物车 */
   onDishAdd(e) {
     const dish = e.detail.dish
+    if (!dish || dish.is_available === false) {
+      wx.showToast({ title: '这道菜暂时售罄', icon: 'none' })
+      return
+    }
 
     // 有调味选项，弹出调味面板
     if (dish.seasonings && dish.seasonings.length > 0) {
@@ -210,9 +229,9 @@ Page({
     for (let i = items.length - 1; i >= 0; i--) {
       if (items[i].dish.id === dish.id) {
         if (items[i].quantity > 1) {
-          items[i].quantity--
+          app.updateCartItemQty(items[i].key, items[i].quantity - 1)
         } else {
-          items.splice(i, 1)
+          app.removeFromCart(items[i].key)
         }
         break
       }
@@ -222,14 +241,17 @@ Page({
 
   /** 点击菜品卡片 */
   onDishTap(e) {
-    // 可扩展为菜品详情页
     const dish = e.detail.dish
-    console.log('tap dish:', dish.name)
+    this.setData({ seasoningDish: dish, seasoningVisible: true })
   },
 
   /** 调味面板确认 */
   onSeasoningConfirm(e) {
     const { dish, seasonings } = e.detail
+    if (!dish || dish.is_available === false) {
+      wx.showToast({ title: '这道菜暂时售罄', icon: 'none' })
+      return
+    }
     app.addToCart(dish, seasonings)
     this.setData({ seasoningVisible: false, seasoningDish: null })
     this._refreshCart()
@@ -244,6 +266,18 @@ Page({
   /** 去结算 */
   onCheckout() {
     wx.navigateTo({ url: '/pages/cart/cart' })
+  },
+
+  /** 从当前结果中随机推荐一道可点菜品 */
+  onRandomDish() {
+    const source = this.data.isSearchMode ? this.data.searchResults : this.data.dishes
+    const available = source.filter(dish => dish.is_available !== false)
+    if (!available.length) {
+      wx.showToast({ title: '当前没有可推荐的菜品', icon: 'none' })
+      return
+    }
+    const dish = available[Math.floor(Math.random() * available.length)]
+    this.setData({ seasoningDish: dish, seasoningVisible: true })
   },
 
   /** 进入管理后台 */

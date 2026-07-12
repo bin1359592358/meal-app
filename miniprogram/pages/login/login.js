@@ -160,6 +160,7 @@ Page({
       const res = await api.post('/api/rooms', { name: roomName });
 
       const userInfo = storage.getUserInfo();
+      app.clearCart();
       storage.setActiveRoom({
         id   : res.id,
         name : res.name,
@@ -192,6 +193,7 @@ Page({
       const res = await api.post('/api/rooms/join', { code: inviteCode });
 
       const userInfo = storage.getUserInfo();
+      app.clearCart();
       storage.setActiveRoom({
         id   : res.id,
         name : res.name,

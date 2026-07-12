@@ -78,7 +78,7 @@ Page({
       if (order.items) {
         order.items = order.items.map(item => ({
           ...item,
-          seasoningText: this.getSeasoningText(item.seasonings),
+          seasoningText: item.seasoning_text || '',
         }))
       }
 
@@ -102,21 +102,6 @@ Page({
       console.error('加载订单详情失败:', err)
       this.setData({ loading: false })
     }
-  },
-
-  /**
-   * 获取调味摘要文本
-   */
-  getSeasoningText(seasonings) {
-    if (!seasonings || Object.keys(seasonings).length === 0) return ''
-    const parts = []
-    for (const key in seasonings) {
-      const val = seasonings[key]
-      if (val && val !== 'default') {
-        parts.push(val)
-      }
-    }
-    return parts.join(', ')
   },
 
   /**

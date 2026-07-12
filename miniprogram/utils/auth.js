@@ -78,6 +78,10 @@ function logout() {
     api.post('/api/auth/logout', {}, { showError: false }).catch(() => {})
   }
   storage.clearAuth()
+  try {
+    const app = getApp()
+    if (app && app.clearCart) app.clearCart()
+  } catch (e) {}
 }
 
 module.exports = { wxLogin, silentLogin, logout }
