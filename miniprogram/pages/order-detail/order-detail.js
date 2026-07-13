@@ -5,6 +5,8 @@
 const api = require('../../utils/api')
 const storage = require('../../utils/storage')
 const util = require('../../utils/util')
+const session = require('../../utils/session')
+const { buildOrderShare } = require('../../utils/share')
 const app = getApp()
 
 Page({
@@ -20,11 +22,16 @@ Page({
     perPersonPrice: '',
     hasPerPerson: false,
     actionInProgress: false,
+    chefNotifyTapped: false,
   },
 
   onLoad(options) {
     if (options.id) {
-      this.setData({ orderId: options.id })
+      this.sharedRoomId = options.roomId || ''
+      this.setData({
+        orderId: options.id,
+        chefNotifyTapped: !!wx.getStorageSync(`chef_notified_${options.id}`),
+      })
       this._checkRole()
       this._waitForLoginAndLoad()
     } else {
@@ -49,11 +56,29 @@ Page({
   async _waitForLoginAndLoad() {
     try {
       await app.globalData.loginPromise
+      await this._activateSharedRoom()
       await this._loadOrder()
     } catch (err) {
       console.error('加载订单详情失败:', err)
       this.setData({ loading: false })
     }
+  },
+
+  async _activateSharedRoom() {
+    const roomId = this.sharedRoomId
+    const current = storage.getActiveRoom()
+    if (!roomId || String(current && current.id) === String(roomId)) return
+
+    const list = await api.get('/api/rooms/mine', { showError: false })
+    const rooms = Array.isArray(list) ? list : []
+    const target = rooms.find(room => String(room.id) === String(roomId))
+    if (!target) return
+
+    const user = storage.getUserInfo()
+    const activeRoom = session.toActiveRoom(target, user && user.id)
+    app.clearCart()
+    storage.setActiveRoom(activeRoom)
+    this.setData({ isChef: activeRoom.role === 'chef' })
   },
 
   /**
@@ -168,5 +193,17 @@ Page({
         }
       },
     })
+  },
+
+  onNotifyChefTap() {
+    const id = this.data.orderId
+    if (!id) return
+    wx.setStorageSync(`chef_notified_${id}`, true)
+    this.setData({ chefNotifyTapped: true })
+    wx.showToast({ title: '请选择厨师的微信', icon: 'none' })
+  },
+
+  onShareAppMessage() {
+    return buildOrderShare(this.data.order || { id: this.data.orderId })
   },
 })

@@ -84,6 +84,20 @@
   </block>
 </view>
 
+<view class="success-mask" wx:if="{{orderSuccessVisible}}">
+  <view class="success-dialog">
+    <image class="success-art" src="/images/share/order-notify.jpg" mode="aspectFill" />
+    <view class="success-content">
+      <text class="success-title">饭宝把订单送到啦～</text>
+      <text class="success-desc">再发张卡片提醒厨师，就不会错过这份订单</text>
+      <button class="notify-chef-btn" open-type="share" bindtap="onNotifyChefTap">
+        {{chefNotifyTapped ? '再次通知厨师' : '喊厨师来看看'}}
+      </button>
+      <view class="view-order-btn" bindtap="onViewSubmittedOrder">稍后再喊，先看订单</view>
+    </view>
+  </view>
+</view>
+
 <!-- 底部下单按钮 -->
 <view wx:if="{{items.length > 0}}" class="bottom-bar">
   <button

@@ -6,6 +6,7 @@ const api = require('../../utils/api')
 const storage = require('../../utils/storage')
 const app = getApp()
 const { toSummary } = require('../../utils/seasoning')
+const { buildRoomShare, buildOrderShare } = require('../../utils/share')
 
 Page({
   data: {
@@ -15,6 +16,9 @@ Page({
     dishCount: 0,
     totalPrice: 0,
     submitting: false,
+    orderSuccessVisible: false,
+    submittedOrder: null,
+    chefNotifyTapped: false,
   },
 
   onLoad(options) {
@@ -166,26 +170,46 @@ Page({
 
       // 清空购物车
       app.clearCart()
-
-      wx.showToast({ title: '下单成功', icon: 'success' })
-
-      // 跳转到订单详情
       const orderId = result.id || result.order_id
-      if (orderId) {
-        setTimeout(() => {
-          wx.redirectTo({
-            url: `/pages/order-detail/order-detail?id=${orderId}`,
-          })
-        }, 500)
-      } else {
-        setTimeout(() => {
-          wx.switchTab({ url: '/pages/orders/orders' })
-        }, 500)
-      }
+      this.setData({
+        items: [],
+        dishCount: 0,
+        totalPrice: 0,
+        orderSuccessVisible: true,
+        submittedOrder: { ...result, id: orderId, room_id: room.id },
+        chefNotifyTapped: false,
+      })
     } catch (err) {
       console.error('下单失败:', err)
     } finally {
       this.setData({ submitting: false })
     }
+  },
+
+  onNotifyChefTap() {
+    const order = this.data.submittedOrder
+    const id = order && order.id
+    if (id) {
+      wx.setStorageSync(`chef_notified_${id}`, true)
+      this.setData({ chefNotifyTapped: true })
+    }
+  },
+
+  onViewSubmittedOrder() {
+    const order = this.data.submittedOrder
+    const id = order && order.id
+    this.setData({ orderSuccessVisible: false })
+    if (id) {
+      wx.redirectTo({ url: `/pages/order-detail/order-detail?id=${id}` })
+      return
+    }
+    wx.switchTab({ url: '/pages/orders/orders' })
+  },
+
+  onShareAppMessage() {
+    if (this.data.submittedOrder) {
+      return buildOrderShare(this.data.submittedOrder)
+    }
+    return buildRoomShare(storage.getActiveRoom())
   },
 })

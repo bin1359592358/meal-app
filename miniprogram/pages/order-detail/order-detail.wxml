@@ -56,6 +56,17 @@
       </view>
     </view>
 
+    <view class="notify-card">
+      <image class="notify-art" src="/images/share/order-notify.jpg" mode="aspectFill" />
+      <view class="notify-copy">
+        <text class="notify-title">饭宝来帮你喊厨师</text>
+        <text class="notify-desc">发张卡片，厨师点击就能直接处理这份订单</text>
+      </view>
+      <button class="notify-share-btn" open-type="share" bindtap="onNotifyChefTap">
+        {{chefNotifyTapped ? '再次喊厨师看看' : '喊厨师来看看'}}
+      </button>
+    </view>
+
     <!-- 厨师操作按钮 -->
     <block wx:if="{{isChef}}">
       <!-- pending: 开始制作 / 取消 -->

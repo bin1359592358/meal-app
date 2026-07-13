@@ -216,3 +216,5 @@
   height: 40rpx;
 }
 .order-header-card{background:linear-gradient(145deg,#fff,#F5F8FE)}.order-number{color:#35588F}.dish-item{border-bottom-color:#E8EDF5}.action-bar{background:rgba(255,255,255,.96);box-shadow:0 -8rpx 26rpx rgba(53,88,143,.09)}
+
+.notify-card{margin-top:28rpx;background:linear-gradient(145deg,#F4F8FF,#FFF8E8);border-radius:27rpx;overflow:hidden;box-shadow:0 10rpx 28rpx rgba(53,88,143,.11)}.notify-art{display:block;width:100%;height:250rpx}.notify-copy{padding:22rpx 24rpx 8rpx;display:flex;flex-direction:column}.notify-title{font-size:30rpx;font-weight:750;color:#30394A}.notify-desc{font-size:23rpx;line-height:1.55;color:#7B8496;margin-top:7rpx}.notify-share-btn{margin:18rpx 24rpx 24rpx!important;height:80rpx;line-height:80rpx;background:linear-gradient(135deg,#6388CB,#456BAE)!important;color:#fff!important;border-radius:20rpx!important;font-size:27rpx;font-weight:700}.notify-share-btn::after{border:0}
