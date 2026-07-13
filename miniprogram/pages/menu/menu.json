@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "点菜",
+  "navigationBarTitleText": "?????",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "dish-card": "/components/dish-card/dish-card",

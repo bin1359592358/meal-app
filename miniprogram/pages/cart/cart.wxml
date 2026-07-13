@@ -1,7 +1,7 @@
 <view class="container">
   <!-- 空购物车 -->
   <view wx:if="{{items.length === 0}}" class="empty-state">
-    <text class="empty-icon">🛒</text>
+    <text class="empty-icon">碗</text>
     <text class="empty-text">购物车是空的</text>
     <text class="empty-text">去菜单页面添加菜品吧</text>
   </view>

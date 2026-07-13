@@ -11,15 +11,15 @@
     "pages/overview/overview"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#FF6B35",
-    "navigationBarTitleText": "点菜",
+    "navigationBarBackgroundColor": "#5579BC",
+    "navigationBarTitleText": "?????",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#F5F5F5",
+    "backgroundColor": "#FFFDF8",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#FF6B35",
+    "color": "#7B8496",
+    "selectedColor": "#5579BC",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [

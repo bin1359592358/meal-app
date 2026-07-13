@@ -39,6 +39,7 @@ Page({
     /** 菜品数量映射（dishId -> quantity） */
     qtyMap: {},
     loadedRoomId: null,
+    activeRoomName: '',
   },
 
   onLoad(options) {
@@ -49,7 +50,7 @@ Page({
     const room = storage.getActiveRoom()
     const roomId = room && room.id
     if (String(roomId || '') !== String(this.data.loadedRoomId || '')) {
-      this.setData({ searchKeyword: '', isSearchMode: false, searchResults: [], dishes: [], categories: [] })
+      this.setData({ searchKeyword: '', isSearchMode: false, searchResults: [], dishes: [], categories: [], activeRoomName: (room && room.name) || '' })
       this._checkRole()
       this._initData()
       return
@@ -88,7 +89,7 @@ Page({
         await this._loadDishes(0)
       }
       const room = storage.getActiveRoom()
-      this.setData({ loadedRoomId: room && room.id })
+      this.setData({ loadedRoomId: room && room.id, activeRoomName: (room && room.name) || '' })
     } catch (err) {
       console.error('初始化菜单失败:', err)
       wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' })

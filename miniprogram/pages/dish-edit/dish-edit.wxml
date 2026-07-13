@@ -109,7 +109,7 @@
       <!-- 是否可点 -->
       <view class="form-group form-group--row">
         <text class="form-label">可点单</text>
-        <switch checked="{{isAvailable}}" bindchange="onAvailableChange" color="#FF6B35" />
+        <switch checked="{{isAvailable}}" bindchange="onAvailableChange" color="#5579BC" />
       </view>
 
       <view class="form-group">

@@ -1,43 +1,9 @@
-<view class="container">
-  <!-- 厨师总览入口 -->
-  <view wx:if="{{isChef}}" class="overview-entry card" bindtap="onGoOverview">
-    <view class="overview-left">
-      <text class="overview-title">订单总览</text>
-      <text class="overview-desc">查看所有订单状态，管理出餐流程</text>
-    </view>
-    <text class="overview-arrow">›</text>
+<view class="orders-page">
+  <view class="orders-head"><text class="orders-kicker">MY ORDERS</text><text class="orders-title">每一餐，都值得期待</text><text class="orders-desc">在这里查看制作进度与历史订单</text></view>
+  <view class="container orders-body">
+    <view wx:if="{{isChef}}" class="overview-entry card" bindtap="onGoOverview"><view class="overview-mark">单</view><view class="overview-left"><text class="overview-title">主厨订单总览</text><text class="overview-desc">处理出餐进度，查看营业数据</text></view><text class="overview-arrow">›</text></view>
+    <view wx:if="{{loading && orders.length === 0}}" class="loading-wrap"><view class="loading-spinner"></view><text class="loading-text">正在翻阅订单...</text></view>
+    <empty-state wx:elif="{{orders.length === 0 && !loading}}" icon="单" text="还没有订单，去选一道喜欢的菜吧" buttonText="去点菜" bind:onAction="onGoToMenu" />
+    <block wx:else><order-card wx:for="{{orders}}" wx:key="id" order="{{item}}" showNickname="{{isChef}}" bind:onTap="onOrderTap" /><view wx:if="{{loading}}" class="loading-more">加载中...</view><view wx:elif="{{!hasMore && orders.length > 0}}" class="no-more">已经到底啦</view></block>
   </view>
-
-  <!-- 加载中 -->
-  <view wx:if="{{loading && orders.length === 0}}" class="loading-wrap">
-    <text class="loading-text">加载中...</text>
-  </view>
-
-  <!-- 空状态 -->
-  <empty-state
-    wx:elif="{{orders.length === 0 && !loading}}"
-    icon="📋"
-    text="还没有订单"
-    buttonText="去点菜"
-    bind:onAction="onGoToMenu"
-  />
-
-  <!-- 订单列表 -->
-  <block wx:else>
-    <order-card
-      wx:for="{{orders}}"
-      wx:key="id"
-      order="{{item}}"
-      showNickname="{{isChef}}"
-      bind:onTap="onOrderTap"
-    />
-
-    <!-- 底部加载状态 -->
-    <view wx:if="{{loading}}" class="loading-more">
-      <text>加载中...</text>
-    </view>
-    <view wx:elif="{{!hasMore && orders.length > 0}}" class="no-more">
-      <text>没有更多订单了</text>
-    </view>
-  </block>
 </view>

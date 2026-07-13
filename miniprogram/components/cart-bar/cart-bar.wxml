@@ -1,22 +1,5 @@
-<view class="cart-bar {{count > 0 ? 'visible' : ''}}" wx:if="{{count > 0}}">
-  <!-- 左侧购物车图标 + 角标 -->
-  <view class="cart-icon-wrap">
-    <view class="cart-icon">
-      <text class="cart-emoji">🛒</text>
-    </view>
-    <view class="cart-badge" wx:if="{{count > 0}}">
-      <text class="badge-text">{{count > 99 ? '99+' : count}}</text>
-    </view>
-  </view>
-
-  <!-- 中间信息 -->
-  <view class="cart-info">
-    <text class="cart-summary">已选 {{count}} 道菜</text>
-    <text class="cart-total">¥{{total}}</text>
-  </view>
-
-  <!-- 右侧按钮 -->
-  <view class="cart-btn" bind:tap="onCheckout">
-    <text class="cart-btn-text">去结算</text>
-  </view>
+<view class="cart-bar" wx:if="{{count > 0}}">
+  <view class="cart-icon-wrap"><view class="cart-icon">碗</view><view class="cart-badge">{{count > 99 ? '99+' : count}}</view></view>
+  <view class="cart-info"><text class="cart-summary">已选 {{count}} 道菜</text><text class="cart-total">¥{{total}}</text></view>
+  <view class="cart-btn" bind:tap="onCheckout">去结算</view>
 </view>

@@ -1,117 +1,54 @@
 <view class="page-menu">
-
-  <!-- ─── 顶部搜索栏 ─── -->
-  <view class="search-bar">
-    <view class="search-input-wrap">
-      <text class="search-icon">🔍</text>
-      <input
-        class="search-input"
-        placeholder="搜索菜品..."
-        placeholder-class="search-placeholder"
-        value="{{searchKeyword}}"
-        bindinput="onSearchInput"
-        confirm-type="search"
-      />
-      <view class="search-clear" wx:if="{{searchKeyword}}" bind:tap="onSearchClear">
-        <text class="clear-icon">✕</text>
+  <view class="menu-head">
+    <view class="brand-line">
+      <image class="mini-avatar" src="/images/brand/avatar.jpg" mode="aspectFill" />
+      <view class="head-copy">
+        <text class="head-kicker">超大一碗饭</text>
+        <text class="room-name">{{activeRoomName || '今天吃点什么？'}}</text>
+      </view>
+      <view class="head-action" wx:if="{{isChef}}" bind:tap="onAdminTap">管理</view>
+    </view>
+    <view class="search-row">
+      <view class="search-input-wrap">
+        <text class="search-mark">⌕</text>
+        <input class="search-input" placeholder="搜索喜欢的菜" placeholder-class="search-placeholder" value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" />
+        <view class="search-clear" wx:if="{{searchKeyword}}" bind:tap="onSearchClear">×</view>
       </view>
     </view>
-
-    <!-- 管理后台入口（厨师角色可见） -->
-    <view class="admin-icon" wx:if="{{isChef}}" bind:tap="onAdminTap">
-      <text class="admin-emoji">⚙️</text>
-    </view>
-    <view class="admin-icon" bind:tap="onRandomDish">
-      <text class="admin-emoji">🎲</text>
+    <view class="recommend-card" bind:tap="onRandomDish">
+      <view class="recommend-copy">
+        <text class="recommend-kicker">CHEF'S CHOICE</text>
+        <text class="recommend-title">让厨娘替你选一道</text>
+        <text class="recommend-desc">选择困难时，交给今天的灵感</text>
+      </view>
+      <view class="recommend-button">随机推荐</view>
     </view>
   </view>
 
-  <!-- ─── 主体：左侧分类 + 右侧菜品 ─── -->
-  <view class="main-content">
-
-    <!-- 左侧分类栏 -->
-    <scroll-view class="category-sidebar" scroll-y enhanced show-scrollbar="{{false}}">
-      <view
-        wx:for="{{categories}}"
-        wx:key="id"
-        class="category-item {{selectedCatIdx === index && !isSearchMode ? 'active' : ''}}"
-        data-index="{{index}}"
-        bind:tap="onCategoryTap"
-      >
-        <text class="cat-icon" wx:if="{{item.icon}}">{{item.icon}}</text>
-        <text class="cat-icon" wx:else>🍴</text>
-        <view class="cat-info">
-          <text class="cat-name">{{item.name}}</text>
-          <text class="cat-count">{{item.dish_count || 0}}道</text>
-        </view>
+  <scroll-view class="category-tabs" scroll-x enhanced show-scrollbar="{{false}}" wx:if="{{!isSearchMode}}">
+    <view class="category-track">
+      <view wx:for="{{categories}}" wx:key="id" class="category-pill {{selectedCatIdx === index ? 'active' : ''}}" data-index="{{index}}" bind:tap="onCategoryTap">
+        <text wx:if="{{item.icon}}" class="cat-icon">{{item.icon}}</text><text class="cat-name">{{item.name}}</text>
       </view>
-    </scroll-view>
+    </view>
+  </scroll-view>
 
-    <!-- 右侧菜品列表 -->
-    <scroll-view class="dish-list" scroll-y enhanced show-scrollbar="{{false}}">
-
-      <!-- 加载态 -->
-      <view class="loading-wrap" wx:if="{{loading}}">
-        <text class="loading-text">加载中...</text>
-      </view>
-
-      <!-- 搜索结果模式 -->
-      <block wx:if="{{isSearchMode}}">
-        <view class="search-result-header" wx:if="{{searchResults.length > 0}}">
-          <text class="search-result-title">搜索 "{{searchKeyword}}" 找到 {{searchResults.length}} 道菜</text>
-        </view>
-        <view class="empty-wrap" wx:if="{{searchResults.length === 0 && !loading}}">
-          <text class="empty-emoji">🔍</text>
-          <text class="empty-text">没有找到相关菜品</text>
-        </view>
-        <dish-card
-          wx:for="{{searchResults}}"
-          wx:key="id"
-          dish="{{item}}"
-          quantity="{{qtyMap[item.id] || 0}}"
-          bind:onAdd="onDishAdd"
-          bind:onMinus="onDishMinus"
-          bind:onTap="onDishTap"
-        />
-      </block>
-
-      <!-- 分类浏览模式 -->
-      <block wx:else>
-        <empty-state
-          wx:if="{{dishes.length === 0 && !loading}}"
-          icon="🍽️"
-          text="{{isChef ? '还没有菜品，开始添加吧' : '主厨正在准备菜单，稍后再来'}}"
-          buttonText="{{isChef ? '添加第一道菜' : ''}}"
-          bind:onAction="onAdminTap"
-        />
-        <dish-card
-          wx:for="{{dishes}}"
-          wx:key="id"
-          dish="{{item}}"
-          quantity="{{qtyMap[item.id] || 0}}"
-          bind:onAdd="onDishAdd"
-          bind:onMinus="onDishMinus"
-          bind:onTap="onDishTap"
-        />
-      </block>
-
-      <!-- 底部留白，防止被购物车栏遮挡 -->
-      <view class="bottom-spacer"></view>
-    </scroll-view>
-  </view>
-
-  <!-- ─── 底部购物车栏 ─── -->
-  <cart-bar
-    count="{{cartCount}}"
-    total="{{cartTotal}}"
-    bind:onCheckout="onCheckout"
-  />
-
-  <!-- ─── 调味选择面板 ─── -->
-  <seasoning-panel
-    dish="{{seasoningDish}}"
-    visible="{{seasoningVisible}}"
-    bind:onConfirm="onSeasoningConfirm"
-    bind:onClose="onSeasoningClose"
-  />
+  <scroll-view class="dish-list" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="list-heading" wx:if="{{!isSearchMode && categories.length}}">
+      <text class="list-title">{{categories[selectedCatIdx].name}}</text><text class="list-count">{{dishes.length}} 道可选</text>
+    </view>
+    <view class="loading-wrap" wx:if="{{loading}}"><view class="loading-spinner"></view><text class="loading-text">厨娘正在准备菜单...</text></view>
+    <block wx:if="{{isSearchMode}}">
+      <view class="list-heading" wx:if="{{searchResults.length}}"><text class="list-title">搜索结果</text><text class="list-count">找到 {{searchResults.length}} 道</text></view>
+      <empty-state wx:if="{{searchResults.length === 0 && !loading}}" icon="⌕" text="没有找到相关菜品" />
+      <dish-card wx:for="{{searchResults}}" wx:key="id" dish="{{item}}" quantity="{{qtyMap[item.id] || 0}}" bind:onAdd="onDishAdd" bind:onMinus="onDishMinus" bind:onTap="onDishTap" />
+    </block>
+    <block wx:else>
+      <empty-state wx:if="{{dishes.length === 0 && !loading}}" icon="□" text="{{isChef ? '菜单还是空的，去添加第一道菜吧' : '主厨正在准备今日菜单'}}" buttonText="{{isChef ? '添加菜品' : ''}}" bind:onAction="onAdminTap" />
+      <dish-card wx:for="{{dishes}}" wx:key="id" dish="{{item}}" quantity="{{qtyMap[item.id] || 0}}" bind:onAdd="onDishAdd" bind:onMinus="onDishMinus" bind:onTap="onDishTap" />
+    </block>
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+  <cart-bar count="{{cartCount}}" total="{{cartTotal}}" bind:onCheckout="onCheckout" />
+  <seasoning-panel dish="{{seasoningDish}}" visible="{{seasoningVisible}}" bind:onConfirm="onSeasoningConfirm" bind:onClose="onSeasoningClose" />
 </view>

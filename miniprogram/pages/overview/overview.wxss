@@ -2,7 +2,7 @@
 
 .page {
   min-height: 100vh;
-  background: #F5F5F5;
+  background: #F7F8FC;
   padding: 24rpx;
   box-sizing: border-box;
   padding-bottom: 80rpx;
@@ -20,8 +20,8 @@
 .loading-spinner {
   width: 64rpx;
   height: 64rpx;
-  border: 6rpx solid #EEEEEE;
-  border-top-color: #FF6B35;
+  border: 6rpx solid #E4EAF4;
+  border-top-color: #5579BC;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -31,7 +31,7 @@
 }
 
 .loading-text {
-  color: #9E9E9E;
+  color: #7B8496;
   font-size: 28rpx;
   margin-top: 24rpx;
 }
@@ -56,19 +56,19 @@
   display: block;
   font-size: 56rpx;
   font-weight: 700;
-  color: #FF6B35;
+  color: #5579BC;
   line-height: 1.2;
   margin-bottom: 12rpx;
 }
 
 .stat-value--price {
-  color: #E53935;
+  color: #D96868;
 }
 
 .stat-label {
   display: block;
   font-size: 24rpx;
-  color: #9E9E9E;
+  color: #7B8496;
 }
 
 /* ── Sort Bar ── */
@@ -83,16 +83,16 @@
 .sort-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #212121;
+  color: #30394A;
 }
 
 .sort-toggle {
   display: flex;
   align-items: center;
   padding: 8rpx 20rpx;
-  background: rgba(255, 107, 53, 0.1);
+  background: rgba(85, 121, 188, 0.1);
   border-radius: 8rpx;
-  color: #FF6B35;
+  color: #5579BC;
   font-size: 24rpx;
   font-weight: 500;
 }
@@ -121,7 +121,7 @@
 
 .summary-item {
   padding: 24rpx 0;
-  border-bottom: 1rpx solid #F5F5F5;
+  border-bottom: 1rpx solid #F7F8FC;
 }
 
 .summary-item:last-child {
@@ -138,7 +138,7 @@
 .summary-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #212121;
+  color: #30394A;
 }
 
 .summary-meta {
@@ -148,7 +148,7 @@
 
 .meta-item {
   font-size: 24rpx;
-  color: #757575;
+  color: #7B8496;
 }
 
 .meta-divider {
@@ -159,15 +159,16 @@
 
 .summary-bar {
   height: 8rpx;
-  background: #F5F5F5;
+  background: #F7F8FC;
   border-radius: 4rpx;
   overflow: hidden;
 }
 
 .summary-bar-fill {
   height: 100%;
-  background: #FF6B35;
+  background: #5579BC;
   border-radius: 4rpx;
   transition: width 0.3s ease;
   min-width: 4rpx;
 }
+.stats-row{gap:18rpx}.stat-card{border:1rpx solid rgba(85,121,188,.11);border-radius:27rpx}.stat-card:first-child{background:linear-gradient(145deg,#fff,#F5F8FE)}.stat-value{color:#35588F}.summary-item{background:#fff;border-radius:23rpx;border:1rpx solid rgba(85,121,188,.1)}.summary-bar-fill{background:linear-gradient(90deg,#5579BC,#7897CF)!important}

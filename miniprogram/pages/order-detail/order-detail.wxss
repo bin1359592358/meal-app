@@ -10,14 +10,14 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #9E9E9E;
+  color: #7B8496;
 }
 
 /* ─── 分区标题 ─── */
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #212121;
+  color: #30394A;
   margin: 32rpx 0 16rpx;
 }
 
@@ -36,7 +36,7 @@
 .order-number {
   font-size: 36rpx;
   font-weight: 700;
-  color: #212121;
+  color: #30394A;
 }
 
 .status-badge {
@@ -55,11 +55,11 @@
 
 .info-text {
   font-size: 26rpx;
-  color: #757575;
+  color: #7B8496;
 }
 
 .nickname {
-  color: #9E9E9E;
+  color: #7B8496;
 }
 
 /* ─── 菜品列表 ─── */
@@ -68,7 +68,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20rpx 0;
-  border-bottom: 1rpx solid #F0F0F0;
+  border-bottom: 1rpx solid #E4EAF4;
 }
 
 .dish-item:last-child {
@@ -84,12 +84,12 @@
 .dish-name {
   font-size: 28rpx;
   font-weight: 500;
-  color: #212121;
+  color: #30394A;
 }
 
 .dish-seasoning {
   font-size: 24rpx;
-  color: #9E9E9E;
+  color: #7B8496;
   margin-top: 4rpx;
 }
 
@@ -101,8 +101,8 @@
 
 .dish-qty {
   font-size: 26rpx;
-  color: #757575;
-  background: #F5F5F5;
+  color: #7B8496;
+  background: #F7F8FC;
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
 }
@@ -110,7 +110,7 @@
 .dish-subtotal {
   font-size: 28rpx;
   font-weight: 600;
-  color: #E53935;
+  color: #D96868;
   min-width: 80rpx;
   text-align: right;
 }
@@ -118,12 +118,12 @@
 /* ─── 备注 ─── */
 .note-card {
   background: #FFF8E1;
-  border-left: 6rpx solid #FF9800;
+  border-left: 6rpx solid #D69B3E;
 }
 
 .note-text {
   font-size: 26rpx;
-  color: #757575;
+  color: #7B8496;
   line-height: 1.6;
 }
 
@@ -141,24 +141,24 @@
 
 .summary-label {
   font-size: 28rpx;
-  color: #757575;
+  color: #7B8496;
 }
 
 .summary-value {
   font-size: 28rpx;
   font-weight: 500;
-  color: #212121;
+  color: #30394A;
 }
 
 .total-price {
   font-size: 36rpx;
   font-weight: 700;
-  color: #E53935;
+  color: #D96868;
 }
 
 .per-person {
   font-size: 28rpx;
-  color: #FF6B35;
+  color: #5579BC;
 }
 
 /* ─── 厨师操作按钮 ─── */
@@ -184,7 +184,7 @@
 }
 
 .btn-primary {
-  background: #FF6B35;
+  background: #5579BC;
   color: #FFFFFF;
 }
 
@@ -198,8 +198,8 @@
 }
 
 .btn-danger-outline {
-  color: #E53935;
-  border-color: #E53935;
+  color: #D96868;
+  border-color: #D96868;
   background: transparent;
 }
 
@@ -215,3 +215,4 @@
 .bottom-placeholder {
   height: 40rpx;
 }
+.order-header-card{background:linear-gradient(145deg,#fff,#F5F8FE)}.order-number{color:#35588F}.dish-item{border-bottom-color:#E8EDF5}.action-bar{background:rgba(255,255,255,.96);box-shadow:0 -8rpx 26rpx rgba(53,88,143,.09)}

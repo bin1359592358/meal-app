@@ -64,7 +64,7 @@
                 checked="{{item.is_available}}"
                 bindchange="onToggleDish"
                 data-id="{{item.id}}"
-                color="#FF6B35"
+                color="#5579BC"
               />
               <view
                 class="action-btn edit-btn"
