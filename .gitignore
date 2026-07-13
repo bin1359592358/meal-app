@@ -41,5 +41,7 @@ Thumbs.db
 # 其他临时文件
 *.log
 screenshots/
+/screen.png
+/头像.png
 ui.xml
 .superpowers/
