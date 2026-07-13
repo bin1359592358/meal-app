@@ -18,7 +18,7 @@
     <view class="recommend-card" bind:tap="onRandomDish">
       <view class="recommend-copy">
         <text class="recommend-kicker">CHEF'S CHOICE</text>
-        <text class="recommend-title">让厨娘替你选一道</text>
+      <text class="recommend-title">让饭宝替你选一道</text>
         <text class="recommend-desc">选择困难时，交给今天的灵感</text>
       </view>
       <view class="recommend-button">随机推荐</view>
@@ -37,7 +37,7 @@
     <view class="list-heading" wx:if="{{!isSearchMode && categories.length}}">
       <text class="list-title">{{categories[selectedCatIdx].name}}</text><text class="list-count">{{dishes.length}} 道可选</text>
     </view>
-    <view class="loading-wrap" wx:if="{{loading}}"><view class="loading-spinner"></view><text class="loading-text">厨娘正在准备菜单...</text></view>
+  <view class="loading-wrap" wx:if="{{loading}}"><view class="loading-spinner"></view><text class="loading-text">饭宝正在准备菜单...</text></view>
     <block wx:if="{{isSearchMode}}">
       <view class="list-heading" wx:if="{{searchResults.length}}"><text class="list-title">搜索结果</text><text class="list-count">找到 {{searchResults.length}} 道</text></view>
       <empty-state wx:if="{{searchResults.length === 0 && !loading}}" icon="⌕" text="没有找到相关菜品" />

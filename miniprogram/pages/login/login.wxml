@@ -42,5 +42,5 @@
       <button class="btn-primary" bindtap="onJoinRoom" disabled="{{!inviteCode || loading}}">{{loading ? '加入中...' : '加入餐桌'}}</button>
     </view>
   </view>
-  <text class="footer-note">由厨娘为每一餐认真准备</text>
+  <text class="footer-note">饭宝为每一餐认真准备</text>
 </view>

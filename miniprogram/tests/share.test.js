@@ -19,10 +19,10 @@ test('无餐桌时回退为普通小程序分享', () => {
   })
 })
 
-test('订单通知直达订单详情', () => {
-  assert.deepEqual(buildOrderShare({ id: 21 }), {
-    title: '新订单已提交，请厨师大人快速处理～',
-    path: '/pages/order-detail/order-detail?id=21&from=chefShare',
+test('订单通知直达对应餐桌的订单详情', () => {
+  assert.deepEqual(buildOrderShare({ id: 21, room_id: 8 }), {
+    title: '饭宝来送单啦～厨师大人，快来看看吧！',
+    path: '/pages/order-detail/order-detail?id=21&from=chefShare&roomId=8',
     imageUrl: '/images/share/order-notify.jpg',
   })
 })
