@@ -7,6 +7,7 @@ const api = require('../../utils/api')
 const storage = require('../../utils/storage')
 const { logout } = require('../../utils/auth')
 const session = require('../../utils/session')
+const { buildRoomShare } = require('../../utils/share')
 const app = getApp()
 
 Page({
@@ -295,12 +296,6 @@ Page({
    */
   onShareAppMessage() {
     const roomDetail = this.data.roomDetail || this.data.activeRoom || {}
-    const roomName = roomDetail.name || '餐桌'
-    const roomCode = roomDetail.code || ''
-
-    return {
-      title: `加入「${roomName}」一起点菜`,
-      path: `/pages/login/login?inviteCode=${roomCode}`,
-    }
+    return buildRoomShare(roomDetail)
   },
 })

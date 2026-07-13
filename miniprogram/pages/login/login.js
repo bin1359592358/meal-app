@@ -120,6 +120,9 @@ Page({
       storage.setUserInfo(data.user);
       this.setData({ loginFailed: false, loginError: '' });
       wx.showToast({ title: '登录成功', icon: 'success' });
+      if (this._autoJoinAfterLogin) {
+        await this._tryAutoJoin();
+      }
     } catch (err) {
       console.error('[login] 回退登录失败:', err);
     } finally {
@@ -135,6 +138,9 @@ Page({
       if (storage.isLoggedIn()) {
         this.setData({ loginFailed: false, loginError: '' });
         wx.showToast({ title: '登录成功', icon: 'success' });
+        if (this._autoJoinAfterLogin) {
+          await this._tryAutoJoin();
+        }
       }
     } catch (err) {
       this.setData({ loginError: '微信登录失败: ' + (err.message || err) });

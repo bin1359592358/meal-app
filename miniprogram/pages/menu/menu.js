@@ -4,6 +4,7 @@
  */
 const api = require('../../utils/api')
 const storage = require('../../utils/storage')
+const { buildRoomShare } = require('../../utils/share')
 const app = getApp()
 
 /** 搜索防抖定时器 */
@@ -289,5 +290,9 @@ Page({
   /** 获取菜品在购物车中的数量 */
   getDishQty(dishId) {
     return this.data.qtyMap[dishId] || 0
+  },
+
+  onShareAppMessage() {
+    return buildRoomShare(storage.getActiveRoom())
   },
 })
